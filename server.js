@@ -16,7 +16,10 @@ const db = mysql.createConnection ({
 
 db.connect((error) => {
   if (error) {
-    console.log(error);
+    console.log(`${error} Not conneted!!!!!!!!!!!!!!!!!!!`);
+  }
+  else {
+    console.log("DB is connected");
   }
 });
 
@@ -28,30 +31,44 @@ const getHtml = async () => {
   }
 };
 
+function formatData(item) {
+  let formatTitle = "";
+  let formatUrl = "www.nike.com";
+
+  formatTitle = item.title.replace(/^\s+|\s+$/g,'');
+  formatUrl += item.url;
+
+  item = {
+    title: formatTitle,
+    url: formatUrl
+  };
+
+  return item;
+}
+
 getHtml()
   .then(html => {
     let ulList = [];
     let drawList = [];
     const $ = cheerio.load(html.data);
     const $bodyList = $("ul.gallery li");
-
+    
     $bodyList.each(function (i, elem) {
       ulList[i] = {
         title: $(this).find('div.ta-sm-c a').text(),
         url: $(this).find('a.comingsoon').attr('href')
-      }; 
+      };
+      ulList[i] = formatData(ulList[i]);
     });
-    console.log(ulList);
 
-    /*
-    let cnt = 0;
-    for (let i = 0; i < ulList.length; i++) {
-      if (ulList[i].title == "THE DRAW 진행예정") {
-        cnt++;
+    for (let item of ulList) {
+      if (item.title === "THE DRAW 진행예정") {
+        drawList.push(item);
       }
     }
-    console.log(cnt);
-    */
+
+    console.log(drawList);
+    console.log(drawList.length);
   });
 
 app.listen(4000, () => {
