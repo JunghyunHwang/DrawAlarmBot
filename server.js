@@ -37,28 +37,36 @@ async function getHtml(url) {
 }
 
 function formatReleaseInfo(releaseInfo) {
+  let tempDate = new Date(); // 다음 해로 넘어가는 거면 문제 생김.... / 매달 바뀌는거라 아닐 수도?
   let drawStartTime = "";
   let announcementTime = "";
   let purchaseTime = "";
-  let timeReg = /(\d{2}:\d{2}) ~ (\d{2}:\d{2})/g;
-  let winnerTimeReg = /(\d{2}:\d{2})/g; //  하나로 통일 해봐
-  let purchaseTimeReg = /(\d{2}:\d{2}) ~ (\d{2}:\d{2})/g; // 한번 더 사용하니까 안됨
+  // let timeReg = /(\d{2}:\d{2}) ~ (\d{2}:\d{2})/g;
+  // let winnerTimeReg = /(\d{2}:\d{2})/g; //  하나로 통일 해봐
+  // let purchaseTimeReg = /(\d{2}:\d{2}) ~ (\d{2}:\d{2})/g; // 한번 더 사용하니까 안됨 끝나는 시간까지
+  let releaseDateReg = /(\d{1,2})\/(\d{1,2})/g;
 
   for (let i = 0; i < releaseInfo.length; i++) {
     let regResult;
     let info = releaseInfo[i].children[1].data;
+    let treg = /(\d{2}:\d{2})|(\d{2}:\d{2}) ~ (\d{2}:\d{2})/g;
 
     switch(i) {
       case 0: //  Draw start time tag
-        regResult = timeReg.exec(info);
+        let regDateResult = releaseDateReg.exec(info);
+        let month = regDateResult[1];
+        let date = regDateResult[2];
+        tempDate.setMonth(month - 1);
+        tempDate.setDate(date);
+        regResult = treg.exec(info);
         drawStartTime = regResult[1];
         break;
       case 1: //  Winner announcment time tag
-        regResult = winnerTimeReg.exec(info);
+        regResult = treg.exec(info);
         announcementTime = regResult[0];
         break;
       case 2: //  Purchase tag
-        regResult = purchaseTimeReg.exec(info);
+        regResult = treg.exec(info);
         purchaseTime = regResult[1];
         break;
       default: // 예외 처리
@@ -67,21 +75,29 @@ function formatReleaseInfo(releaseInfo) {
     }
   }
 
-  return [drawStartTime, announcementTime, purchaseTime];
+  let year = tempDate.getFullYear();
+  let month = (tempDate.getMonth() + 1);
+  let date = tempDate.getDate();
+  let drawDate = `${year}-${month}-${date}`;
+
+  return [drawDate, drawStartTime, announcementTime, purchaseTime];
 }
 
 async function getSneakersInfo() {
   console.log("가져오는 중...");
-  let priceReg = /\d{2,3},\d{3}/g
 
   for (let i = 0; i < drawList.length; i++) {
     let sneakers = await getHtml(drawList[i].url);
     let $ = cheerio.load(sneakers.data);
     let sneakersInfo = $("aside.is-the-draw-start div");
+    let priceReg = /\d{2,3},\d{3}/g
 
     let type = $(sneakersInfo).find('h1.pb3-sm').text();
     let name = $(sneakersInfo).find('h5.pb3-sm').text();
-    let price = $(sneakersInfo).find('div.fs16-md').text();
+    let tempPrice = $(sneakersInfo).find('div.fs16-md').text();
+    let resultPrice = priceReg.exec(tempPrice);
+    console.log(resultPrice);
+    let price = resultPrice[0];
     let releaseInfo = $(sneakersInfo).find('p.draw-info');
     let drawInfo = formatReleaseInfo(releaseInfo);
 
@@ -89,9 +105,11 @@ async function getSneakersInfo() {
       type: type,
       name: name,
       price: price,
-      draw_time: drawInfo[0],
-      announcement_time: drawInfo[1],
-      purchase_time: drawInfo[2]
+      draw_date: drawInfo[0],
+      draw_time: drawInfo[1],
+      announcement_time: drawInfo[2],
+      purchase_time: drawInfo[3],
+      url: drawList[i].url
     };
 
     products.push(drawData);
@@ -129,6 +147,6 @@ async function getDrawInfo() {
 
 getDrawInfo();
 
-app.listen(4000, () => {
+app.listen(3000, () => {
   console.log("Server is running like a Ninja");
 });
