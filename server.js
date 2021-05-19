@@ -24,7 +24,6 @@ db.connect((error) => {
 });
 
 let nikeUpcomingUrl = "https://www.nike.com/kr/launch/?type=upcoming&activeDate=date-filter:AFTER_DATE";
-let drawList = [];
 let products = [];
 
 async function getHtml(url) {
@@ -36,20 +35,17 @@ async function getHtml(url) {
   }
 }
 
-function formatReleaseInfo(releaseInfo) {
+function formatReleaseInfo(releaseDayInfo) {
   let tempDate = new Date(); // 다음 해로 넘어가는 거면 문제 생김.... / 매달 바뀌는거라 아닐 수도?
   let drawStartTime = "";
   let announcementTime = "";
   let purchaseTime = "";
-  // let timeReg = /(\d{2}:\d{2}) ~ (\d{2}:\d{2})/g;
-  // let winnerTimeReg = /(\d{2}:\d{2})/g; //  하나로 통일 해봐
-  // let purchaseTimeReg = /(\d{2}:\d{2}) ~ (\d{2}:\d{2})/g; // 한번 더 사용하니까 안됨 끝나는 시간까지
   let releaseDateReg = /(\d{1,2})\/(\d{1,2})/g;
 
-  for (let i = 0; i < releaseInfo.length; i++) {
-    let regResult;
-    let info = releaseInfo[i].children[1].data;
-    let treg = /(\d{2}:\d{2})|(\d{2}:\d{2}) ~ (\d{2}:\d{2})/g;
+  for (let i = 0; i < releaseDayInfo.length; i++) {
+    let info = releaseDayInfo[i].children[1].data;
+    let timeReg = /(\d{2}:\d{2})/g;
+    let regResult = info.match(timeReg);
 
     switch(i) {
       case 0: //  Draw start time tag
@@ -58,16 +54,14 @@ function formatReleaseInfo(releaseInfo) {
         let date = regDateResult[2];
         tempDate.setMonth(month - 1);
         tempDate.setDate(date);
-        regResult = treg.exec(info);
-        drawStartTime = regResult[1];
+        drawStartTime = regResult[0];
+        // end time here = regResult[1];
         break;
       case 1: //  Winner announcment time tag
-        regResult = treg.exec(info);
         announcementTime = regResult[0];
         break;
       case 2: //  Purchase tag
-        regResult = treg.exec(info);
-        purchaseTime = regResult[1];
+        purchaseTime = regResult[0];
         break;
       default: // 예외 처리
         console.log("Unknown type...");
@@ -83,23 +77,26 @@ function formatReleaseInfo(releaseInfo) {
   return [drawDate, drawStartTime, announcementTime, purchaseTime];
 }
 
-async function getSneakersInfo() {
+async function getSneakersInfo(drawList) {
   console.log("가져오는 중...");
 
   for (let i = 0; i < drawList.length; i++) {
     let sneakers = await getHtml(drawList[i].url);
     let $ = cheerio.load(sneakers.data);
     let sneakersInfo = $("aside.is-the-draw-start div");
-    let priceReg = /\d{2,3},\d{3}/g
+    let imgInfo = $("div.prd-img-wrap");
+    let priceReg = /\d+/g;
 
     let type = $(sneakersInfo).find('h1.pb3-sm').text();
     let name = $(sneakersInfo).find('h5.pb3-sm').text();
     let tempPrice = $(sneakersInfo).find('div.fs16-md').text();
-    let resultPrice = priceReg.exec(tempPrice);
-    console.log(resultPrice);
-    let price = resultPrice[0];
-    let releaseInfo = $(sneakersInfo).find('p.draw-info');
-    let drawInfo = formatReleaseInfo(releaseInfo);
+    let resultPrice = tempPrice.match(priceReg);
+    let price = resultPrice[0] + resultPrice[1];
+    let releaseDayInfo = $(sneakersInfo).find('p.draw-info');
+    let drawInfo = formatReleaseInfo(releaseDayInfo);
+
+    let img_url = $(imgInfo).find('figure.snkrs-gallery-item').attr('href');
+    console.log(img_url);
 
     drawData = {
       type: type,
@@ -121,6 +118,7 @@ async function getSneakersInfo() {
 async function getDrawInfo() {
   let html = await axios.get(nikeUpcomingUrl);
   let ulList = [];
+  let drawList = [];
   let $ = cheerio.load(html.data);
   let bodyList = $("ul.gallery li");
   let strDraw = "THE DRAW 진행예정";
@@ -142,7 +140,7 @@ async function getDrawInfo() {
     }
   });
 
-  getSneakersInfo();
+  getSneakersInfo(drawList);
 }
 
 getDrawInfo();
