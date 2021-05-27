@@ -6,7 +6,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const mysql = require("mysql");
 const path = require('path');
-const crawling = require("./public/getProducts");
+const crawling = require("./crawling/crawling.js");
 const fs = require("fs");
 
 const app = express();
@@ -147,28 +147,35 @@ async function main() {
   let products = [];
   let startTime = new Date();
   let drawList = await getDrawList();
-  
-  loggingNumberDrawProducts(drawList.length);
-  products = await getSneakersInfo(drawList);
+  const drawInfoSql = "SELECT * FROM draw_info";
+  let drawData = "";
 
-  let endTime = new Date();
-  let resultRunningTime = (endTime - startTime) / 1000.0;
-  let drawData = getDrawInfoData("nike");
+  db.query(drawInfoSql, (err, result) => {
+    if (err) {
+      console.log(err);
+    }
+    else if (result.length === 0) {
+      drawData = 0;
+    }
+    else {
+      console.log(result[0]);
+      drawData = result[0];
+    }
+  });
 
-  console.log(products);
+  // loggingNumberDrawProducts(drawList.length);
+  // products = await getSneakersInfo(drawList);
+
+  // let endTime = new Date();
+  // let resultRunningTime = (endTime - startTime) / 1000.0;
+  // console.log(products);
   console.log(drawData);
-  console.log(`It took ${resultRunningTime} seconds!!`);
+  // console.log(`It took ${resultRunningTime} seconds!!`);
 }
-
-async function test() {
-  const fetchApi = '/api/get/draw_info';
-  const response = await fetch(fetchApi);
-
-  console.log(response);
-}
-// test();
 
 main();
+
+// crawling.getInfo(nikeUpcomingUrl);
 
 // let job = schedule.scheduleJob('45 * * * * *', async() => {
 //   let drawList = await getDrawList();
