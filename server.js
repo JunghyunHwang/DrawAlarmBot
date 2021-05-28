@@ -28,10 +28,6 @@ db.connect((error) => {
 const publicDirectory = path.join(__dirname, './public');
 app.use(express.static(publicDirectory));
 
-app.use('/api', require('./routes/query'));
-
-let nikeUpcomingUrl = "https://www.nike.com/kr/launch/?type=upcoming&activeDate=date-filter:AFTER_DATE";
-
 async function scrapPage(url) {
   try {
     return await axios.get(url);
@@ -39,26 +35,6 @@ async function scrapPage(url) {
   catch (error) {
     console.error(`${error}: cannot get html`);
   }
-}
-
-function getDrawInfoData(brandName) {
-  let data = "";
-  // const numdrawInfoSql = "SELECT type_name, sneakers_name FROM draw_info WHERE brand_name=?";
-  const test = "SELECT * FROM draw_info";
-
-  db.query(test, function(err, result) {
-    if (err) {
-      console.log(err);
-    }
-    else if (result.length === 0) {
-      data = 0;
-    }
-    else {
-      data = result[0];
-    }
-  });
-
-  return data;
 }
 
 async function getSneakersInfo(drawList) {
@@ -75,22 +51,28 @@ async function getSneakersInfo(drawList) {
     let dateReg = /(\d{1,2})\/(\d{1,2})/g;
 
     let tempPrice = $(sneakersInfo).find('div.fs16-md').text();
-    let resultPrice = tempPrice.match(priceReg);    //  100만원 까지 가는 제품은 구별 못함
+    let resultPrice = tempPrice.match(priceReg);    //  100만원 하는 신발은 구별 못함
     let price = resultPrice[0] + resultPrice[1];
     let releaseInfo = $(sneakersInfo).find('p.draw-info').text();
 
-    let drawDateInfo = releaseInfo.match(dateReg);
     let drawTimeInfo = releaseInfo.match(timeReg);
+    let dateRegResult = dateReg.exec(releaseInfo);
+    let currentDate = new Date();
+    let years = currentDate.getFullYear();  // 해가 넘어가는 부분에서 문제 생길 가능성 있음
+    let month = dateRegResult[1];
+    let date = dateRegResult[2];
+    
+    let drawDateInfo = `${years}-${month}-${date}`;
 
     products[i] = {
       type: $(sneakersInfo).find('h1.pb3-sm').text(),
       name: $(sneakersInfo).find('h5.pb3-sm').text(),
       price: price,
-      draw_date: drawDateInfo[0],
-      draw_start_time: drawTimeInfo[0],
-      draw_end_time: drawTimeInfo[1],
-      announcement_time: drawTimeInfo[2],
-      purchase_time: drawTimeInfo[3],
+      draw_date: drawDateInfo,
+      draw_start_time: `${drawDateInfo} ${drawTimeInfo[0]}`,
+      draw_end_time: `${drawDateInfo} ${drawTimeInfo[1]}`,
+      announcement_time: `${drawDateInfo} ${drawTimeInfo[2]}`,
+      purchase_time: `${drawDateInfo} ${drawTimeInfo[3]}`,
       url: drawList[i].url,
       img_url: $(imgInfo).find('img.image-component').attr('src')
     };
@@ -115,8 +97,8 @@ function loggingNumberDrawProducts(numberProducts) {
   });
 }
 
-async function getDrawList() {
-  const HTML = await scrapPage(nikeUpcomingUrl);
+async function getDrawList(brandUrl) {
+  const HTML = await scrapPage(brandUrl);
   let ulList = [];
   let drawList = [];
   let $ = cheerio.load(HTML.data);
@@ -145,13 +127,18 @@ async function getDrawList() {
 
 async function main() {
   let products = [];
+  let brandUrl = {
+    nike: "https://www.nike.com/kr/launch/?type=upcoming&activeDate=date-filter:AFTER_DATE"
+  };
   let startTime = new Date();
-  let drawList = await getDrawList();
-  const DRAW_INFO_SQL = "SELECT * FROM draw_info";
+  let drawList = await getDrawList(brandUrl);
   let drawData = [];
   let newProducts = [];
-  products = await getSneakersInfo(drawList);
 
+  products = await getSneakersInfo(drawList);
+  console.log(products);
+
+  const DRAW_INFO_SQL = "SELECT * FROM draw_info";
   db.query(DRAW_INFO_SQL, (err, result) => {
     if (err) {
       console.log(err);
@@ -163,7 +150,7 @@ async function main() {
       drawData = result;
 
       for (let i = 0; i < products.length; i++) {
-        if (drawData.indexOf(products[i]) < 0) {  // 한번 더 검증 필요 이름 같은데 
+        if (drawData.indexOf(products[i]) < 0) {  // 한번 더 검증 필요 이름은 같은데 타입이 다르던가 반대던가
           const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
 
           db.query(INSERT_PRODUCT_SQL, {
@@ -196,8 +183,6 @@ async function main() {
 }
 
 main();
-
-// crawling.getInfo(nikeUpcomingUrl);
 
 // let job = schedule.scheduleJob('45 * * * * *', async() => {
 //   let drawList = await getDrawList();
