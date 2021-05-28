@@ -37,7 +37,7 @@ async function scrapPage(url) {
   }
 }
 
-async function getSneakersInfo(drawList) {
+async function getSneakersInfo(drawList) { // 지금은 나이키 아니면 동작 안함
   console.log("가져오는 중...");
   let products = [];
 
@@ -58,15 +58,15 @@ async function getSneakersInfo(drawList) {
     let drawTimeInfo = releaseInfo.match(timeReg);
     let dateRegResult = dateReg.exec(releaseInfo);
     let currentDate = new Date();
-    let years = currentDate.getFullYear();  // 해가 넘어가는 부분에서 문제 생길 가능성 있음
+    let years = currentDate.getFullYear();  // 다음해로 넘어가는 12월에 문제 생길 가능성 있음
     let month = dateRegResult[1];
     let date = dateRegResult[2];
     
     let drawDateInfo = `${years}-${month}-${date}`;
 
     products[i] = {
-      type: $(sneakersInfo).find('h1.pb3-sm').text(),
-      name: $(sneakersInfo).find('h5.pb3-sm').text(),
+      type: drawList[i].type_name,
+      name: drawList[i].sneakers_name,
       price: price,
       draw_date: drawDateInfo,
       draw_start_time: `${drawDateInfo} ${drawTimeInfo[0]}`,
@@ -108,43 +108,36 @@ async function getDrawList(brandUrl) {
   bodyList.each(function(i, elem) {
     ulList[i] = {
       release_type: $(this).find('a.ncss-btn-primary-dark').text(),   //  Release type: Draw or Comming soon.
-      url: $(this).find('a.comingsoon').attr('href')
     };
 
     // Check release type
     let hasDraw = ulList[i].release_type.indexOf(strDraw);
 
     if (hasDraw != -1) {
-      let productUrl ="https://www.nike.com";
+      let productUrl = "https://www.nike.com";
+      productUrl += $(this).find('a.comingsoon').attr('href');
 
-      productUrl += ulList[i].url;
-      drawList.push({url: productUrl});
+      let product = {
+        type_name: $(this).find('h3.headline-5').text(),
+        sneakers_name: $(this).find('h6.headline-3').text(),
+        url: productUrl
+      }
+      drawList.push(product);
     }
   });
 
   return drawList;
 }
 
-async function main() {
-  let products = [];
-  let brandUrl = {
-    nike: "https://www.nike.com/kr/launch/?type=upcoming&activeDate=date-filter:AFTER_DATE"
-  };
-  let startTime = new Date();
-  let drawList = await getDrawList(brandUrl);
-  let drawData = [];
-  let newProducts = [];
-
-  products = await getSneakersInfo(drawList);
-  console.log(products);
-
-  const DRAW_INFO_SQL = "SELECT * FROM draw_info";
-  db.query(DRAW_INFO_SQL, (err, result) => {
+function getDrawInfo() {
+  db.query(DRAW_INFO_SQL, [url], (err, result) => {
     if (err) {
       console.log(err);
     }
     else if (result.length === 0) {
-      drawData = 0;
+      if (drawList.length) {
+        // insert data
+      }
     }
     else {  // DateTime 값 넣을때 형싱 : yy-mm-dd 00:00:00 이런식으로 formatting 해서 넣어!
       drawData = result;
@@ -173,12 +166,51 @@ async function main() {
       }
     }
   });
+}
 
+async function main() {
+  let products = [];
+  let brands = {
+    Nike: "https://www.nike.com/kr/launch/"
+  };
+  let startTime = new Date();
+  let newProducts = [];
+  
+  for (let url in brands) {
+    let drawList = await getDrawList(brands[url]);
+    if (drawList.length === 0) {
+      continue;
+    }
+
+    let drawData = [];
+    const DRAW_INFO_SQL = "SELECT type_name, sneakers_name FROM draw_info WHERE?";
+
+    db.query(DRAW_INFO_SQL, [url], (err, result) => {
+      if (err) {
+        console.log(err);
+      }
+      else if(result.length === 0) {
+        for (let i = 0; i < drawList.length; i++) {
+          newProducts.push(drawList[i]);
+        }
+      }
+      else {
+        drawData = result;  // 이거 해야 함?
+
+        for (let i = 0; i < drawList.length; i++) {
+          if (drawData.indexOf(drawList[i]) < 0) { // drawList에 원래 DB에 있는 값 넣어서 잘 작동하는지 확인
+            newProducts.push(drawList[i]);
+          }
+        }
+      }
+    });
+  }
+
+  // products = await getSneakersInfo(newProducts);
+  // inset data
   // loggingNumberDrawProducts(drawList.length);
-
   // let endTime = new Date();
   // let resultRunningTime = (endTime - startTime) / 1000.0;
-  // console.log(products);
   // console.log(`It took ${resultRunningTime} seconds!!`);
 }
 
