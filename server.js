@@ -6,7 +6,6 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const mysql = require("mysql");
 const path = require('path');
-const crawling = require("./crawling/crawling.js");
 const fs = require("fs");
 
 const app = express();
@@ -65,8 +64,9 @@ async function getSneakersInfo(drawList) { // 지금은 나이키 아니면 동�
     let drawDateInfo = `${years}-${month}-${date}`;
 
     products[i] = {
-      type: drawList[i].type_name,
-      name: drawList[i].sneakers_name,
+      brand_name: drawList[i].brand_name,
+      type_name: drawList[i].type_name,
+      sneakers_name: drawList[i].sneakers_name,
       price: price,
       draw_date: drawDateInfo,
       draw_start_time: `${drawDateInfo} ${drawTimeInfo[0]}`,
@@ -97,31 +97,27 @@ function loggingNumberDrawProducts(numberProducts) {
   });
 }
 
-async function getDrawList(brandUrl) {
+async function getDrawList(brandUrl, brandName) {
   const HTML = await scrapPage(brandUrl);
-  let ulList = [];
   let drawList = [];
   let $ = cheerio.load(HTML.data);
   let bodyList = $("ul.gallery li");
   let strDraw = "THE DRAW 진행예정";
 
   bodyList.each(function(i, elem) {
-    ulList[i] = {
-      release_type: $(this).find('a.ncss-btn-primary-dark').text(),   //  Release type: Draw or Comming soon.
-    };
+    let releaseType = $(this).find('div.ncss-btn-primary-dark').text();
 
     // Check release type
-    let hasDraw = ulList[i].release_type.indexOf(strDraw);
-
-    if (hasDraw != -1) {
+    if (releaseType.indexOf(strDraw) != -1) {
       let productUrl = "https://www.nike.com";
       productUrl += $(this).find('a.comingsoon').attr('href');
-
+      
       let product = {
+        brand_name: brandName,
         type_name: $(this).find('h3.headline-5').text(),
         sneakers_name: $(this).find('h6.headline-3').text(),
         url: productUrl
-      }
+      };
       drawList.push(product);
     }
   });
@@ -129,97 +125,101 @@ async function getDrawList(brandUrl) {
   return drawList;
 }
 
-function getDrawInfo() {
-  db.query(DRAW_INFO_SQL, [url], (err, result) => {
-    if (err) {
-      console.log(err);
-    }
-    else if (result.length === 0) {
-      if (drawList.length) {
-        // insert data
-      }
-    }
-    else {  // DateTime 값 넣을때 형싱 : yy-mm-dd 00:00:00 이런식으로 formatting 해서 넣어!
-      drawData = result;
+function insertDrawInfo(drawProducts) {
+  console.log("데이터 베이스에 저장 중...");
+  for (let i = 0; i < drawProducts.length; i++) {
+    const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
 
-      for (let i = 0; i < products.length; i++) {
-        if (drawData.indexOf(products[i]) < 0) {  // 한번 더 검증 필요 이름은 같은데 타입이 다르던가 반대던가
-          const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
-
-          db.query(INSERT_PRODUCT_SQL, {
-            brand_name: "Nike", 
-            type_name: products[i].type, 
-            sneakers_name: products[i].name, 
-            product_price: products[i].price, 
-            product_url: products[i].url, 
-            draw_start_time: products[i].draw_start_time,   // products draw time fomatting 다시 해야 함
-            draw_end_time: products[i].draw_end_time, 
-            winner_announcement_time: products[i].announcement_time, 
-            purchase_time: products[i].purchase_time
-          }, (err, inserResult) => {
-            if (err) {
-              console.log(err);
-            }
-          });
-          newProducts.push(products[i]);
-        }
-      }
-    }
-  });
-}
-
-async function main() {
-  let products = [];
-  let brands = {
-    Nike: "https://www.nike.com/kr/launch/"
-  };
-  let startTime = new Date();
-  let newProducts = [];
-  
-  for (let url in brands) {
-    let drawList = await getDrawList(brands[url]);
-    if (drawList.length === 0) {
-      continue;
-    }
-
-    let drawData = [];
-    const DRAW_INFO_SQL = "SELECT type_name, sneakers_name FROM draw_info WHERE?";
-
-    db.query(DRAW_INFO_SQL, [url], (err, result) => {
+    db.query(INSERT_PRODUCT_SQL, {
+      brand_name: drawProducts[i].brand_name, 
+      type_name: drawProducts[i].type_name, 
+      sneakers_name: drawProducts[i].sneakers_name, 
+      product_price: drawProducts[i].price, 
+      product_url: drawProducts[i].url, 
+      draw_start_time: drawProducts[i].draw_start_time,
+      draw_end_time: drawProducts[i].draw_end_time, 
+      winner_announcement_time: drawProducts[i].announcement_time, 
+      purchase_time: drawProducts[i].purchase_time
+    }, (err, inserResult) => {
       if (err) {
         console.log(err);
       }
-      else if(result.length === 0) {
-        for (let i = 0; i < drawList.length; i++) {
-          newProducts.push(drawList[i]);
-        }
-      }
       else {
-        drawData = result;  // 이거 해야 함?
-
-        for (let i = 0; i < drawList.length; i++) {
-          if (drawData.indexOf(drawList[i]) < 0) { // drawList에 원래 DB에 있는 값 넣어서 잘 작동하는지 확인
-            newProducts.push(drawList[i]);
-          }
-        }
+        console.log("저장 완료 ^^7");
       }
     });
   }
 
-  // products = await getSneakersInfo(newProducts);
-  // inset data
-  // loggingNumberDrawProducts(drawList.length);
-  // let endTime = new Date();
-  // let resultRunningTime = (endTime - startTime) / 1000.0;
-  // console.log(`It took ${resultRunningTime} seconds!!`);
+  return;
 }
 
-main();
+async function getProductInfo(newProducts) {
+  let drawProducts = await getSneakersInfo(newProducts);
+  insertDrawInfo(drawProducts);
 
-// let job = schedule.scheduleJob('45 * * * * *', async() => {
-//   let drawList = await getDrawList();
-//   loggingNumberDrawProducts(drawList.length);
-// });
+  return;
+}
+
+async function main() {
+  let brands = {
+    Nike: "https://www.nike.com/kr/launch/"
+  };
+  let startTime = new Date();
+  
+  for (let brandName in brands) {
+    let drawList = await getDrawList(brands[brandName], brandName);
+    if (drawList.length === 0) { 
+      continue;
+    }
+
+    let drawData = [];
+    let newProducts = [];
+    const DRAW_INFO_SQL = "SELECT type_name, sneakers_name FROM draw_info WHERE brand_name=?";
+
+    db.query(DRAW_INFO_SQL, [brandName], (err, result) => {
+      if (err) {
+        console.log(err);
+      }
+      else if(result.length === 0) {
+        getProductInfo(drawList);
+      }
+      else {
+        for (let i = 0; i < result.length; i++) { // 줄일 수 있으면 줄여봐
+          drawData[i] = `${result[i].type_name} ${result[i].sneakers_name}`;
+        }
+
+        for (let i = 0; i < drawList.length; i++) {
+          let name = `${drawList[i].type_name} ${drawList[i].sneakers_name}`;
+
+          if (drawData.indexOf(name) < 0) { 
+            newProducts.push(drawList[i]);
+          }
+        }
+      
+        if(newProducts.length) {  // 하나씩 보내면 어떨까?
+          getProductInfo(newProducts);
+        }
+        else {
+          console.log("저장 할게 없어");
+        }
+
+        let endTime = new Date();
+        let resultRunningTime = (endTime - startTime) / 1000.0;
+        console.log(`It took ${resultRunningTime} seconds!!`);
+      }
+    });
+  }
+}
+
+let checkDraw = schedule.scheduleJob('0 30 * * * *', async () => {
+  let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
+  loggingNumberDrawProducts(drawList.length);
+  // 파일 열어봐서 만약 개수의 변화가 있다면 main 함수 호출 하면 좋을듯
+});
+
+let job = schedule.scheduleJob('0 15 1 * * *', async() => {
+  main();
+});
 
 app.listen(3000, () => 
 {
