@@ -116,10 +116,10 @@ function loggingNumberDrawProducts(numberProducts) {
 }
 
 async function getDrawList() {
-  const html = await scrapPage(nikeUpcomingUrl);
+  const HTML = await scrapPage(nikeUpcomingUrl);
   let ulList = [];
   let drawList = [];
-  let $ = cheerio.load(html.data);
+  let $ = cheerio.load(HTML.data);
   let bodyList = $("ul.gallery li");
   let strDraw = "THE DRAW 진행예정";
 
@@ -147,29 +147,51 @@ async function main() {
   let products = [];
   let startTime = new Date();
   let drawList = await getDrawList();
-  const drawInfoSql = "SELECT * FROM draw_info";
-  let drawData = "";
+  const DRAW_INFO_SQL = "SELECT * FROM draw_info";
+  let drawData = [];
+  let newProducts = [];
+  products = await getSneakersInfo(drawList);
 
-  db.query(drawInfoSql, (err, result) => {
+  db.query(DRAW_INFO_SQL, (err, result) => {
     if (err) {
       console.log(err);
     }
     else if (result.length === 0) {
       drawData = 0;
     }
-    else {
-      console.log(result[0]);
-      drawData = result[0];
+    else {  // DateTime 값 넣을때 형싱 : yy-mm-dd 00:00:00 이런식으로 formatting 해서 넣어!
+      drawData = result;
+
+      for (let i = 0; i < products.length; i++) {
+        if (drawData.indexOf(products[i]) < 0) {  // 한번 더 검증 필요 이름 같은데 
+          const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
+
+          db.query(INSERT_PRODUCT_SQL, {
+            brand_name: "Nike", 
+            type_name: products[i].type, 
+            sneakers_name: products[i].name, 
+            product_price: products[i].price, 
+            product_url: products[i].url, 
+            draw_start_time: products[i].draw_start_time,   // products draw time fomatting 다시 해야 함
+            draw_end_time: products[i].draw_end_time, 
+            winner_announcement_time: products[i].announcement_time, 
+            purchase_time: products[i].purchase_time
+          }, (err, inserResult) => {
+            if (err) {
+              console.log(err);
+            }
+          });
+          newProducts.push(products[i]);
+        }
+      }
     }
   });
 
   // loggingNumberDrawProducts(drawList.length);
-  // products = await getSneakersInfo(drawList);
 
   // let endTime = new Date();
   // let resultRunningTime = (endTime - startTime) / 1000.0;
   // console.log(products);
-  console.log(drawData);
   // console.log(`It took ${resultRunningTime} seconds!!`);
 }
 
