@@ -137,6 +137,7 @@ function insertDrawInfo(drawProducts) {
       sneakers_name: drawProducts[i].sneakers_name, 
       product_price: drawProducts[i].price, 
       product_url: drawProducts[i].url, 
+      draw_date: drawProducts[i].draw_date,
       draw_start_time: drawProducts[i].draw_start_time,
       draw_end_time: drawProducts[i].draw_end_time, 
       winner_announcement_time: drawProducts[i].announcement_time, 
@@ -156,6 +157,7 @@ function insertDrawInfo(drawProducts) {
 
 async function getProductInfo(newProducts) {
   let drawProducts = await getSneakersInfo(newProducts);
+  console.log(drawProducts);
   insertDrawInfo(drawProducts);
 
   return;
@@ -202,7 +204,7 @@ function main(drawList) {
   });
 }
 
-let checkDraw = schedule.scheduleJob('40 * * * * *', async () => {
+let checkDraw = schedule.scheduleJob('40 * * * * *', async() => {
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
 
   let lastDrawCount = 0;
@@ -216,14 +218,18 @@ let checkDraw = schedule.scheduleJob('40 * * * * *', async () => {
     let array = data.toString().split("\n");
     let lastDrawlen = array.length - 2;
     lastDrawCount = Number(array[lastDrawlen]);
-    
+
     if (array.length > 200) {
       fs.writeFile(logPath, "", 'utf8', (err) => {
         if (err) throw err;
       });
+
+      if (drawList.length === lastDrawCount) { // 이전 내용들을 지웠고 새로 추가할 draw정보가 없으면 log에 아무것도 남지 않음 그럼 다음 가져올때 문제생김
+        loggingNumberDrawProducts(drawList.length);  
+      }
     }
 
-    if (drawList.length != lastDrawCount) {
+    if (drawList.length != lastDrawCount) { 
       main(drawList);
       loggingNumberDrawProducts(drawList.length);
     }
@@ -232,6 +238,12 @@ let checkDraw = schedule.scheduleJob('40 * * * * *', async () => {
     }
   });
 });
+
+// let checkAlarm = schedule.scheduleJob('15 0 0 * * *', async() => {
+//   const day = new Date();
+//   // const today = `${year}-${month}-${}`;
+//   const DRAW_INFO_SQL = "SELECT * FROM draw_info";
+// });
 
 app.listen(3000, () => 
 {
