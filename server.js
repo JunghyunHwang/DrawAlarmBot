@@ -85,7 +85,7 @@ function loggingNumberDrawProducts(numberProducts) {
   const logPath = './config/Get-snkrs-info-log.txt';
   const date = new Date();
   const timeStamp = date.toLocaleString();
-  const logData = `${timeStamp} THE DRAW products num: '${numberProducts}'\n`;
+  const logData = `${timeStamp} THE DRAW products num: \n${numberProducts}\n`;
 
   fs.appendFile(logPath, logData, (err) => {
     if (err) {
@@ -127,6 +127,7 @@ async function getDrawList(brandUrl, brandName) {
 
 function insertDrawInfo(drawProducts) {
   console.log("데이터 베이스에 저장 중...");
+  
   for (let i = 0; i < drawProducts.length; i++) {
     const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
 
@@ -145,7 +146,7 @@ function insertDrawInfo(drawProducts) {
         console.log(err);
       }
       else {
-        console.log("저장 완료 ^^7");
+        console.log("새로운 Draw 저장 완료!!");
       }
     });
   }
@@ -160,65 +161,67 @@ async function getProductInfo(newProducts) {
   return;
 }
 
-async function main() {
-  let brands = {
-    Nike: "https://www.nike.com/kr/launch/"
-  };
+function main(drawList) {
   let startTime = new Date();
-  
-  for (let brandName in brands) {
-    let drawList = await getDrawList(brands[brandName], brandName);
-    if (drawList.length === 0) { 
-      continue;
+  let drawData = [];
+  let newProducts = [];
+  let brandName = "Nike";
+  const DRAW_INFO_SQL = "SELECT type_name, sneakers_name FROM draw_info WHERE brand_name=?";
+
+  db.query(DRAW_INFO_SQL, [brandName], (err, result) => {
+    if (err) {
+      console.log(err);
     }
-
-    let drawData = [];
-    let newProducts = [];
-    const DRAW_INFO_SQL = "SELECT type_name, sneakers_name FROM draw_info WHERE brand_name=?";
-
-    db.query(DRAW_INFO_SQL, [brandName], (err, result) => {
-      if (err) {
-        console.log(err);
+    else if(result.length === 0) {
+      getProductInfo(drawList);
+    }
+    else {
+      for (let i = 0; i < result.length; i++) { // 줄일 수 있으면 줄여봐
+        drawData[i] = `${result[i].type_name} ${result[i].sneakers_name}`;
       }
-      else if(result.length === 0) {
-        getProductInfo(drawList);
+
+      for (let i = 0; i < drawList.length; i++) {
+        let name = `${drawList[i].type_name} ${drawList[i].sneakers_name}`;
+
+        if (drawData.indexOf(name) < 0) { 
+          newProducts.push(drawList[i]);
+        }
+      }
+    
+      if(newProducts.length) {  // 하나씩 보내면 어떨까?
+        getProductInfo(newProducts);
       }
       else {
-        for (let i = 0; i < result.length; i++) { // 줄일 수 있으면 줄여봐
-          drawData[i] = `${result[i].type_name} ${result[i].sneakers_name}`;
-        }
-
-        for (let i = 0; i < drawList.length; i++) {
-          let name = `${drawList[i].type_name} ${drawList[i].sneakers_name}`;
-
-          if (drawData.indexOf(name) < 0) { 
-            newProducts.push(drawList[i]);
-          }
-        }
-      
-        if(newProducts.length) {  // 하나씩 보내면 어떨까?
-          getProductInfo(newProducts);
-        }
-        else {
-          console.log("저장 할게 없어");
-        }
-
-        let endTime = new Date();
-        let resultRunningTime = (endTime - startTime) / 1000.0;
-        console.log(`It took ${resultRunningTime} seconds!!`);
+        console.log("저장 할게 없어");
       }
-    });
-  }
+
+      let endTime = new Date();
+      let resultRunningTime = (endTime - startTime) / 1000.0;
+      console.log(`It took ${resultRunningTime} seconds!!`);
+    }
+  });
 }
 
-let checkDraw = schedule.scheduleJob('0 30 * * * *', async () => {
+let checkDraw = schedule.scheduleJob('40 * * * * *', async () => {
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
-  loggingNumberDrawProducts(drawList.length);
-  // 파일 열어봐서 만약 개수의 변화가 있다면 main 함수 호출 하면 좋을듯
-});
 
-let job = schedule.scheduleJob('0 15 1 * * *', async() => {
-  main();
+  let lastDrawCount = 0;
+  const logPath = './config/Get-snkrs-info-log.txt';
+
+  fs.readFile(logPath, 'utf8', (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+    let array = data.toString().split("\n");
+    let len = array.length - 2;
+    lastDrawCount = Number(array[len]);
+
+    if (drawList.length != lastDrawCount) {
+      main(drawList);
+    }
+
+    loggingNumberDrawProducts(drawList.length);
+  });
 });
 
 app.listen(3000, () => 
