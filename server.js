@@ -212,15 +212,24 @@ let checkDraw = schedule.scheduleJob('40 * * * * *', async () => {
     if (err) {
       console.log(err);
     }
+
     let array = data.toString().split("\n");
-    let len = array.length - 2;
-    lastDrawCount = Number(array[len]);
+    let lastDrawlen = array.length - 2;
+    lastDrawCount = Number(array[lastDrawlen]);
+    
+    if (array.length > 200) {
+      fs.writeFile(logPath, "", 'utf8', (err) => {
+        if (err) throw err;
+      });
+    }
 
     if (drawList.length != lastDrawCount) {
       main(drawList);
+      loggingNumberDrawProducts(drawList.length);
     }
-
-    loggingNumberDrawProducts(drawList.length);
+    else {
+      console.log("Nothing changed!");
+    }
   });
 });
 
