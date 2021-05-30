@@ -163,11 +163,19 @@ async function getProductInfo(newProducts) {
   return;
 }
 
+function setAlarm(todayDraw) {
+  let today = new Date(todayDraw[0].draw_start_time);
+  let alarm = schedule.scheduleJob(today, () => {
+    console.log(`${todayDraw[0].brand_name} ${todayDraw[0].type_name} ${todayDraw[0].sneakers_name} THE DRAW가 시작되었습니다!`);
+    // 여기서 푸쉬 들어가야함 그리고 그날 발매하는게 여러게면 아직 처리 안함
+  });
+}
+
 function main(drawList) {
   let startTime = new Date();
   let drawData = [];
   let newProducts = [];
-  let brandName = "Nike";
+  let brandName = "Nike"; // re 나중에 여러 브랜드 일때
   const DRAW_INFO_SQL = "SELECT type_name, sneakers_name FROM draw_info WHERE brand_name=?";
 
   db.query(DRAW_INFO_SQL, [brandName], (err, result) => {
@@ -225,7 +233,7 @@ let checkDraw = schedule.scheduleJob('40 * * * * *', async() => {
       });
 
       if (drawList.length === lastDrawCount) { // 이전 내용들을 지웠고 새로 추가할 draw정보가 없으면 log에 아무것도 남지 않음 그럼 다음 가져올때 문제생김
-        loggingNumberDrawProducts(drawList.length);  
+        loggingNumberDrawProducts(drawList.length);
       }
     }
 
@@ -239,11 +247,26 @@ let checkDraw = schedule.scheduleJob('40 * * * * *', async() => {
   });
 });
 
-// let checkAlarm = schedule.scheduleJob('15 0 0 * * *', async() => {
-//   const day = new Date();
-//   // const today = `${year}-${month}-${}`;
-//   const DRAW_INFO_SQL = "SELECT * FROM draw_info";
-// });
+let checkAlarm = schedule.scheduleJob('15 0 0 * * *', () => {
+  const day = new Date();
+  let year = day.getFullYear();
+  let month = day.getMonth() + 1;
+  let date = day.getDate();
+  const today = `${year}-${month}-${date}`;
+  const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
+
+  db.query(DRAW_INFO_SQL, [today], (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+    else if (data.length === 0) {
+      console.log("THE DRAW 예정이 없습니다.");
+    }
+    else {
+      setAlarm(data);
+    }
+  });
+});
 
 app.listen(3000, () => 
 {
