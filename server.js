@@ -92,7 +92,7 @@ function loggingNumberDrawProducts(numberProducts) {
       throw err;
     }
     else {
-      console.log("Got number of products");
+      console.log("Got a number of products");
     }
   });
 }
@@ -125,7 +125,7 @@ async function getDrawList(brandUrl, brandName) {
   return drawList;
 }
 
-function insertDrawInfo(drawProducts) {
+function insertDrawData(drawProducts) {
   console.log("데이터 베이스에 저장 중...");
   
   for (let i = 0; i < drawProducts.length; i++) {
@@ -157,7 +157,7 @@ function insertDrawInfo(drawProducts) {
 
 async function getProductInfo(newProducts) {
   let drawProducts = await getSneakersInfo(newProducts);
-  insertDrawInfo(drawProducts);
+  insertDrawData(drawProducts);
 
   return;
 }
@@ -193,8 +193,7 @@ function setAlarm(todayDraw) {
   });
 }
 
-function main(drawList) {
-  let startTime = new Date();
+function getDrawDatas(drawList) {
   let drawData = [];
   let newProducts = [];
   let brandName = "Nike"; // re 나중에 여러 브랜드 일때
@@ -226,15 +225,11 @@ function main(drawList) {
       else {
         console.log("저장 할게 없어");
       }
-
-      let endTime = new Date();
-      let resultRunningTime = (endTime - startTime) / 1000.0;
-      console.log(`It took ${resultRunningTime} seconds!!`);
     }
   });
 }
 
-let checkNewDraw = schedule.scheduleJob('40 * * * * *', async() => {
+let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => {
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
   let time = new Date();
   let minutes = (time.getMinutes() < 10) ? `0${time.getMinutes()}` : String(time.getMinutes());
@@ -262,18 +257,22 @@ let checkNewDraw = schedule.scheduleJob('40 * * * * *', async() => {
     }
 
     if (drawList.length != lastDrawCount) { 
-      main(drawList);
+      getDrawDatas(drawList);
       loggingNumberDrawProducts(drawList.length);
     }
-    else {
-      if(minutes % 15 == 0) {
-        console.log(`Nothing changed / ${hours} : ${minutes}`);
-      }
+    else if(minutes % 15 == 0) {
+      console.log(`Nothing changed / ${hours} : ${minutes}`);
     }
   });
 });
 
-let checkAlarm = schedule.scheduleJob('15 0 0 * * *', () => {
+let checkNewDrawsEveryday = schedule.scheduleJob('0 5 0 * * *', async() => {
+  let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
+  getDrawDatas(drawList);
+  loggingNumberDrawProducts(drawList.length);
+});
+
+let checkTodayAlarm = schedule.scheduleJob('0 15 0 * * *', () => {
   const day = new Date();
   let year = day.getFullYear();
   let month = day.getMonth() + 1;
