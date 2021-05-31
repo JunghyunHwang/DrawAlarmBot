@@ -157,17 +157,39 @@ function insertDrawInfo(drawProducts) {
 
 async function getProductInfo(newProducts) {
   let drawProducts = await getSneakersInfo(newProducts);
-  console.log(drawProducts);
   insertDrawInfo(drawProducts);
 
   return;
 }
 
 function setAlarm(todayDraw) {
-  let today = new Date(todayDraw[0].draw_start_time);
-  let alarm = schedule.scheduleJob(today, () => {
-    console.log(`${todayDraw[0].brand_name} ${todayDraw[0].type_name} ${todayDraw[0].sneakers_name} THE DRAW가 시작되었습니다!`);
+  let drawStartTime = new Date(todayDraw[0].draw_start_time);
+  let drawStartAlarm = schedule.scheduleJob(drawStartTime, () => {
+    console.log(`${todayDraw[0].brand_name} ${todayDraw[0].type_name} ${todayDraw[0].sneakers_name} THE DRAW 가 시작되었습니다!`);
     // 여기서 푸쉬 들어가야함 그리고 그날 발매하는게 여러게면 아직 처리 안함
+  });
+  let startYear = drawStartTime.getFullYear();
+  let startMonth = drawStartTime.getMonth();
+  let startDate = drawStartTime.getDate();
+  let startHours = drawStartTime.getHours();
+  let startMinutes = drawStartTime.getMinutes();
+  console.log(`Drarw 알람이 ${startYear}-${startMonth}-${startDate} ${startHours} : ${startMinutes} 에 설정되었습니다.`);
+
+  //  확인하지 않았으면 중간에 한번 더 알려주는거 
+  let drawEndTime = new Date(todayDraw[0].draw_end_time);
+  let drawEndAlarm = schedule.scheduleJob(drawEndTime, () => {
+    // 드로우 종료되었습니다.
+    console.log("Draw가 종료되었습니다.");
+    const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
+
+    db.query(DELETE_DRAW_SQL, [todayDraw[0].id], (err, complete) => {
+      if (err) {
+        console.log(err);
+      }
+      else {
+        console.log("삭제 완료!!");
+      }
+    });
   });
 }
 
@@ -212,9 +234,11 @@ function main(drawList) {
   });
 }
 
-let checkDraw = schedule.scheduleJob('40 * * * * *', async() => {
+let checkNewDraw = schedule.scheduleJob('40 * * * * *', async() => {
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
-
+  let time = new Date();
+  let minutes = (time.getMinutes() < 10) ? `0${time.getMinutes()}` : String(time.getMinutes());
+  let hours = time.getHours() < 10 ? `0${time.getHours()}` : String(time.getHours());
   let lastDrawCount = 0;
   const logPath = './config/Get-snkrs-info-log.txt';
 
@@ -242,7 +266,9 @@ let checkDraw = schedule.scheduleJob('40 * * * * *', async() => {
       loggingNumberDrawProducts(drawList.length);
     }
     else {
-      console.log("Nothing changed!");
+      if(minutes % 15 == 0) {
+        console.log(`Nothing changed / ${hours} : ${minutes}`);
+      }
     }
   });
 });
@@ -268,7 +294,6 @@ let checkAlarm = schedule.scheduleJob('15 0 0 * * *', () => {
   });
 });
 
-app.listen(3000, () => 
-{
+app.listen(3000, () => {
   console.log("Server is running like a Ninja");
 });
