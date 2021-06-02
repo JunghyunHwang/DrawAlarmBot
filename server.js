@@ -6,11 +6,11 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const mysql = require("mysql");
 const path = require('path');
+// const Database = require('./controllers/drawInfo');
 const fs = require("fs");
-const { Console } = require("console");
 
 const app = express();
-dotenv.config({path: './.env'});
+dotenv.config({path: './config/.env'});
 
 const db = mysql.createConnection({
   host: process.env.DATABASE_HOST,
@@ -112,7 +112,6 @@ async function getDrawList(brandUrl, brandName) {
     if (releaseType.indexOf(strDraw) != -1) {
       let productUrl = "https://www.nike.com";
       productUrl += $(this).find('a.comingsoon').attr('href');
-      
       let product = {
         brand_name: brandName,
         type_name: $(this).find('h3.headline-5').text(),
@@ -126,7 +125,9 @@ async function getDrawList(brandUrl, brandName) {
   return drawList;
 }
 
-function insertDrawData(drawProducts) {
+async function getProductInfo(newProducts) {
+  let drawProducts = await getSneakersInfo(newProducts);
+  
   console.log("데이터 베이스에 저장 중...");
   
   for (let i = 0; i < drawProducts.length; i++) {
@@ -149,18 +150,10 @@ function insertDrawData(drawProducts) {
       }
       else {
         console.log("새로운 Draw 저장 완료!!");
+        //  만약 시간이 09 : 00 ~ 21 : 00 면 바로 알림
       }
     });
   }
-
-  return;
-}
-
-async function getProductInfo(newProducts) {
-  let drawProducts = await getSneakersInfo(newProducts);
-  insertDrawData(drawProducts);
-
-  return;
 }
 
 function setAlarm(todayDraw) {
@@ -204,7 +197,7 @@ function getDrawDatas(drawList) {
     if (err) {
       console.log(err);
     }
-    else if(result.length === 0) {
+    else if (result.length === 0) {
       getProductInfo(drawList);
     }
     else {
@@ -233,20 +226,20 @@ function getDrawDatas(drawList) {
 let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => {
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
   let time = new Date();
-  let minutes = (time.getMinutes() < 10) ? `0${time.getMinutes()}` : String(time.getMinutes());
   let hours = time.getHours() < 10 ? `0${time.getHours()}` : String(time.getHours());
+  let minutes = (time.getMinutes() < 10) ? `0${time.getMinutes()}` : String(time.getMinutes());
   const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
 
   db.query(NUMBER_OF_DRAW_DATA_SQL, ["Nike"], (err, drawData) => {
-    if (err){
+    if (err) {
       console.log(err);
     }
-    else{
-      if (drawList.length != drawData[0]['COUNT(*)']){
+    else {
+      if (drawList.length != drawData[0]['COUNT(*)']) {
         getDrawDatas(drawList);
         loggingNumberDrawProducts(drawList.length);
       }
-      else{
+      else {
         console.log(`Nothing changed / ${hours} : ${minutes}`);
       }
     }
