@@ -7,6 +7,7 @@ const cheerio = require("cheerio");
 const mysql = require("mysql");
 const path = require('path');
 const fs = require("fs");
+const { Console } = require("console");
 
 const app = express();
 dotenv.config({path: './.env'});
@@ -234,34 +235,20 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => 
   let time = new Date();
   let minutes = (time.getMinutes() < 10) ? `0${time.getMinutes()}` : String(time.getMinutes());
   let hours = time.getHours() < 10 ? `0${time.getHours()}` : String(time.getHours());
-  let lastDrawCount = 0;
-  const logPath = './config/Get-snkrs-info-log.txt';
+  const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
 
-  fs.readFile(logPath, 'utf8', (err, data) => {
-    if (err) {
+  db.query(NUMBER_OF_DRAW_DATA_SQL, ["Nike"], (err, drawData) => {
+    if (err){
       console.log(err);
     }
-
-    let array = data.toString().split("\n");
-    let lastDrawlen = array.length - 2;
-    lastDrawCount = Number(array[lastDrawlen]);
-
-    if (array.length > 200) {
-      fs.writeFile(logPath, "", 'utf8', (err) => {
-        if (err) throw err;
-      });
-
-      if (drawList.length === lastDrawCount) { // 이전 내용들을 지웠고 새로 추가할 draw정보가 없으면 log에 아무것도 남지 않음 그럼 다음 가져올때 문제생김
+    else{
+      if (drawList.length != drawData[0]['COUNT(*)']){
+        getDrawDatas(drawList);
         loggingNumberDrawProducts(drawList.length);
       }
-    }
-
-    if (drawList.length != lastDrawCount) { 
-      getDrawDatas(drawList);
-      loggingNumberDrawProducts(drawList.length);
-    }
-    else if(minutes % 15 == 0) {
-      console.log(`Nothing changed / ${hours} : ${minutes}`);
+      else{
+        console.log(`Nothing changed / ${hours} : ${minutes}`);
+      }
     }
   });
 });
