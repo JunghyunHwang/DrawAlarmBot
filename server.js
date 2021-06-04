@@ -33,7 +33,7 @@ async function scrapPage(url) {
     return await axios.get(url);
   }
   catch (error) {
-    console.error(`${error}: cannot get html`);
+    console.error(`${error}: cannot get html!!!!!!!!!!!!!!!!`);
   }
 }
 
@@ -103,7 +103,7 @@ async function getDrawList(brandUrl, brandName) {
   let drawList = [];
   let $ = cheerio.load(HTML.data);
   let bodyList = $("ul.gallery li");
-  let strDraw = "THE DRAW 진행예정";
+  let strDraw = "THE DRAW 진행예정";  //응모중에는 'THE DRAW 응모하기'
 
   bodyList.each(function(i, elem) {
     let releaseType = $(this).find('div.ncss-btn-primary-dark').text();
@@ -165,15 +165,15 @@ function setAlarm(todayDraw) {
   let startYear = drawStartTime.getFullYear();
   let startMonth = drawStartTime.getMonth();
   let startDate = drawStartTime.getDate();
-  let startHours = drawStartTime.getHours();
-  let startMinutes = drawStartTime.getMinutes();
-  console.log(`Drarw 알람이 ${startYear}-${startMonth}-${startDate} ${startHours} : ${startMinutes} 에 설정되었습니다.`);
+  let startHours = drawStartTime.getHours() < 10 ? `0${drawStartTime.getHours()}` : drawStartTime.getHours();
+  let startMinutes = drawStartTime.getMinutes() < 10 ? `0${drawStartTime.getMinutes()}` : drawStartTime.getMinutes();
+  console.log(`Drarw 알람이 ${startYear}-${startMonth}-${startDate} / ${startHours} : ${startMinutes} 에 설정되었습니다.`);
 
   //  확인하지 않았으면 중간에 한번 더 알려주는거 
   let drawEndTime = new Date(todayDraw[0].draw_end_time);
   let drawEndAlarm = schedule.scheduleJob(drawEndTime, () => {
     // 드로우 종료되었습니다.
-    console.log("Draw가 종료되었습니다.");
+    console.log(`${todayDraw[0].brand_name} ${todayDraw[0].type_name} ${todayDraw[0].sneakers_name}의 Draw가 종료되었습니다.`);
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
     db.query(DELETE_DRAW_SQL, [todayDraw[0].id], (err, complete) => {
@@ -224,12 +224,12 @@ function getDrawDatas(drawList) {
 }
 
 let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => {
-  let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
   let time = new Date();
   let hours = time.getHours() < 10 ? `0${time.getHours()}` : String(time.getHours());
   let minutes = (time.getMinutes() < 10) ? `0${time.getMinutes()}` : String(time.getMinutes());
+  let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
   const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
-
+  
   db.query(NUMBER_OF_DRAW_DATA_SQL, ["Nike"], (err, drawData) => {
     if (err) {
       console.log(err);
@@ -240,13 +240,16 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => 
         loggingNumberDrawProducts(drawList.length);
       }
       else {
+        let endTime = new Date();
+        let resultTime = (endTime - time) / 1000;
+        console.log(`${resultTime}초 걸림!`);
         console.log(`Nothing changed / ${hours} : ${minutes}`);
       }
     }
   });
 });
 
-let checkNewDrawsEveryday = schedule.scheduleJob('0 5 0 * * *', async() => {
+let checkNewDrawsEveryday = schedule.scheduleJob('0 10 0 * * *', async() => {
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
   getDrawDatas(drawList);
   loggingNumberDrawProducts(drawList.length);
