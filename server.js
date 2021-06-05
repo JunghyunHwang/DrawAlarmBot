@@ -103,7 +103,7 @@ async function getDrawList(brandUrl, brandName) {
   let drawList = [];
   let $ = cheerio.load(HTML.data);
   let bodyList = $("ul.gallery li");
-  let strDraw = "THE DRAW 진행예정";  //응모중에는 'THE DRAW 응모하기'
+  let strDraw = "THE DRAW 진행예정";  //응모중에는 'THE DRAW 응모하기 / 응모 끝나면 THE DRAW 응모 마감'
 
   bodyList.each(function(i, elem) {
     let releaseType = $(this).find('div.ncss-btn-primary-dark').text();
@@ -127,7 +127,6 @@ async function getDrawList(brandUrl, brandName) {
 
 async function getProductInfo(newProducts) {
   let drawProducts = await getSneakersInfo(newProducts);
-  
   console.log("데이터 베이스에 저장 중...");
   
   for (let i = 0; i < drawProducts.length; i++) {
@@ -163,7 +162,7 @@ function setAlarm(todayDraw) {
     // 여기서 푸쉬 들어가야함 그리고 그날 발매하는게 여러게면 아직 처리 안함
   });
   let startYear = drawStartTime.getFullYear();
-  let startMonth = drawStartTime.getMonth();
+  let startMonth = drawStartTime.getMonth() + 1;
   let startDate = drawStartTime.getDate();
   let startHours = drawStartTime.getHours() < 10 ? `0${drawStartTime.getHours()}` : drawStartTime.getHours();
   let startMinutes = drawStartTime.getMinutes() < 10 ? `0${drawStartTime.getMinutes()}` : drawStartTime.getMinutes();
@@ -215,6 +214,7 @@ function getDrawDatas(drawList) {
     
       if(newProducts.length) {  // 하나씩 보내면 어떨까?
         getProductInfo(newProducts);
+        loggingNumberDrawProducts(drawList.length);
       }
       else {
         console.log("저장 할게 없어");
@@ -222,6 +222,38 @@ function getDrawDatas(drawList) {
     }
   });
 }
+
+let test = schedule.scheduleJob('0 30 11 * * *', () => {
+  let testDatas = [
+    {
+      brand_name: "Nike",
+      type_name: "Jordan 1",
+      sneakers_name: "travis scott",
+      price: 1800000,
+      url: "www.travisscott.com",
+      draw_date: '2021-6-7',
+      draw_start_time: '2021-6-7 10:00',
+      draw_end_time: '2021-6-7 10:30',
+      announcement_time: '2021-6-7 11:00',
+      purchase_time: '2021-6-7 11:00',
+      img_url: "https://cdn.shopify.com/s/files/1/0255/9429/8467/products/Air-Jordan-1-Hi-OG-TS-SP-CD4487-100-Travis_1_1000x1000.jpg?v=1598556179"
+    },
+    {
+      brand_name: "Nike",
+      type_name: "Jordan 1",
+      sneakers_name: "Dior - XXBLUE",
+      price: 12000000,
+      url: "www.dior.com",
+      draw_date: '2021-6-7',
+      draw_start_time: '2021-6-7 10:00',
+      draw_end_time: '2021-6-7 10:30',
+      announcement_time: '2021-6-7 11:00',
+      purchase_time: '2021-6-7 11:00',
+      img_url: "https://sneakerstrendz.com/wp-content/uploads/2020/06/air-jordan-1-x-dior.jpg"
+    }
+  ];
+  getDrawDatas(testData);
+});
 
 let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => {
   let time = new Date();
@@ -237,7 +269,6 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => 
     else {
       if (drawList.length != drawData[0]['COUNT(*)']) {
         getDrawDatas(drawList);
-        loggingNumberDrawProducts(drawList.length);
       }
       else {
         let endTime = new Date();
@@ -252,7 +283,6 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => 
 let checkNewDrawsEveryday = schedule.scheduleJob('0 10 0 * * *', async() => {
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
   getDrawDatas(drawList);
-  loggingNumberDrawProducts(drawList.length);
 });
 
 let checkTodayAlarm = schedule.scheduleJob('0 15 0 * * *', () => {
@@ -263,15 +293,18 @@ let checkTodayAlarm = schedule.scheduleJob('0 15 0 * * *', () => {
   const today = `${year}-${month}-${date}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
 
-  db.query(DRAW_INFO_SQL, [today], (err, data) => {
+  db.query(DRAW_INFO_SQL, [today], (err, drawDatas) => {
     if (err) {
       console.log(err);
     }
-    else if (data.length === 0) {
-      console.log("THE DRAW 예정이 없습니다.");
+    else if (drawDatas.length === 0) {
+      console.log(`${today} THE DRAW 예정이 없습니다.`);
     }
     else {
-      setAlarm(data);
+      // for (let data of drawDatas) {
+      //   setAlarm(data);
+      // }
+      console.log(drawDatas);
     }
   });
 });
