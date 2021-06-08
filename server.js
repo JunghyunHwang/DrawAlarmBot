@@ -100,8 +100,8 @@ function loggingNumberDrawProducts(numberProducts) {
 
 async function getDrawList(brandUrl, brandName) {
   const HTML = await scrapPage(brandUrl);
-  let drawList = [];
   let $ = cheerio.load(HTML.data);
+  let drawList = [];
   let bodyList = $("ul.gallery li");
   let strDraw = "THE DRAW 진행예정";  //응모중에는 'THE DRAW 응모하기 / 응모 끝나면 THE DRAW 응모 마감'
 
@@ -125,24 +125,23 @@ async function getDrawList(brandUrl, brandName) {
   return drawList;
 }
 
-async function getProductInfo(newProducts) {
-  let drawProducts = await getSneakersInfo(newProducts);
+async function insertNewProducts(newProducts) {
   console.log("데이터 베이스에 저장 중...");
   
-  for (let i = 0; i < drawProducts.length; i++) {
+  for (let i = 0; i < newProducts.length; i++) {
     const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
 
     db.query(INSERT_PRODUCT_SQL, {
-      brand_name: drawProducts[i].brand_name, 
-      type_name: drawProducts[i].type_name, 
-      sneakers_name: drawProducts[i].sneakers_name, 
-      product_price: drawProducts[i].price, 
-      product_url: drawProducts[i].url, 
-      draw_date: drawProducts[i].draw_date,
-      draw_start_time: drawProducts[i].draw_start_time,
-      draw_end_time: drawProducts[i].draw_end_time, 
-      winner_announcement_time: drawProducts[i].announcement_time, 
-      purchase_time: drawProducts[i].purchase_time
+      brand_name: newProducts[i].brand_name, 
+      type_name: newProducts[i].type_name, 
+      sneakers_name: newProducts[i].sneakers_name, 
+      product_price: newProducts[i].price, 
+      product_url: newProducts[i].url, 
+      draw_date: newProducts[i].draw_date,
+      draw_start_time: newProducts[i].draw_start_time,
+      draw_end_time: newProducts[i].draw_end_time, 
+      winner_announcement_time: newProducts[i].announcement_time, 
+      purchase_time: newProducts[i].purchase_time
     }, (err, inserResult) => {
       if (err) {
         console.log(err);
@@ -156,9 +155,9 @@ async function getProductInfo(newProducts) {
 }
 
 function setAlarm(todayDraw) {
-  let drawStartTime = new Date(todayDraw[0].draw_start_time);
+  let drawStartTime = new Date(todayDraw.draw_start_time);
   let drawStartAlarm = schedule.scheduleJob(drawStartTime, () => {
-    console.log(`${todayDraw[0].brand_name} ${todayDraw[0].type_name} ${todayDraw[0].sneakers_name} THE DRAW 가 시작되었습니다!`);
+    console.log(`${todayDraw.brand_name} ${todayDraw.type_name} ${todayDraw.sneakers_name} THE DRAW 가 시작되었습니다!`);
     // 여기서 푸쉬 들어가야함 그리고 그날 발매하는게 여러게면 아직 처리 안함
   });
   let startYear = drawStartTime.getFullYear();
@@ -169,13 +168,13 @@ function setAlarm(todayDraw) {
   console.log(`Drarw 알람이 ${startYear}-${startMonth}-${startDate} / ${startHours} : ${startMinutes} 에 설정되었습니다.`);
 
   //  확인하지 않았으면 중간에 한번 더 알려주는거 
-  let drawEndTime = new Date(todayDraw[0].draw_end_time);
+  let drawEndTime = new Date(todayDraw.draw_end_time);
   let drawEndAlarm = schedule.scheduleJob(drawEndTime, () => {
     // 드로우 종료되었습니다.
-    console.log(`${todayDraw[0].brand_name} ${todayDraw[0].type_name} ${todayDraw[0].sneakers_name}의 Draw가 종료되었습니다.`);
+    console.log(`${todayDraw.brand_name} ${todayDraw.type_name} ${todayDraw.sneakers_name}의 Draw가 종료되었습니다.`);
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
-    db.query(DELETE_DRAW_SQL, [todayDraw[0].id], (err, complete) => {
+    db.query(DELETE_DRAW_SQL, [todayDraw.id], (err, complete) => {
       if (err) {
         console.log(err);
       }
@@ -192,12 +191,12 @@ function getDrawDatas(drawList) {
   let brandName = "Nike"; // re 나중에 여러 브랜드 일때
   const DRAW_INFO_SQL = "SELECT type_name, sneakers_name FROM draw_info WHERE brand_name=?";
 
-  db.query(DRAW_INFO_SQL, [brandName], (err, result) => {
+  db.query(DRAW_INFO_SQL, [brandName], async(err, result) => {
     if (err) {
       console.log(err);
     }
     else if (result.length === 0) {
-      getProductInfo(drawList);
+      insertNewProducts(await getSneakersInfo(newProducts));
     }
     else {
       for (let i = 0; i < result.length; i++) { // 줄일 수 있으면 줄여봐
@@ -213,8 +212,7 @@ function getDrawDatas(drawList) {
       }
     
       if(newProducts.length) {  // 하나씩 보내면 어떨까?
-        getProductInfo(newProducts);
-        loggingNumberDrawProducts(drawList.length);
+        insertNewProducts(await getSneakersInfo(newProducts));
       }
       else {
         console.log("저장 할게 없어");
@@ -223,42 +221,8 @@ function getDrawDatas(drawList) {
   });
 }
 
-let test = schedule.scheduleJob('0 30 11 * * *', () => {
-  let testDatas = [
-    {
-      brand_name: "Nike",
-      type_name: "Jordan 1",
-      sneakers_name: "travis scott",
-      price: 1800000,
-      url: "www.travisscott.com",
-      draw_date: '2021-6-7',
-      draw_start_time: '2021-6-7 10:00',
-      draw_end_time: '2021-6-7 10:30',
-      announcement_time: '2021-6-7 11:00',
-      purchase_time: '2021-6-7 11:00',
-      img_url: "https://cdn.shopify.com/s/files/1/0255/9429/8467/products/Air-Jordan-1-Hi-OG-TS-SP-CD4487-100-Travis_1_1000x1000.jpg?v=1598556179"
-    },
-    {
-      brand_name: "Nike",
-      type_name: "Jordan 1",
-      sneakers_name: "Dior - XXBLUE",
-      price: 12000000,
-      url: "www.dior.com",
-      draw_date: '2021-6-7',
-      draw_start_time: '2021-6-7 10:00',
-      draw_end_time: '2021-6-7 10:30',
-      announcement_time: '2021-6-7 11:00',
-      purchase_time: '2021-6-7 11:00',
-      img_url: "https://sneakerstrendz.com/wp-content/uploads/2020/06/air-jordan-1-x-dior.jpg"
-    }
-  ];
-  getDrawDatas(testData);
-});
-
 let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => {
-  let time = new Date();
-  let hours = time.getHours() < 10 ? `0${time.getHours()}` : String(time.getHours());
-  let minutes = (time.getMinutes() < 10) ? `0${time.getMinutes()}` : String(time.getMinutes());
+  let startTime = new Date();
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
   const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
   
@@ -272,9 +236,9 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => 
       }
       else {
         let endTime = new Date();
-        let resultTime = (endTime - time) / 1000;
+        let resultTime = (endTime - startTime) / 1000;
         console.log(`${resultTime}초 걸림!`);
-        console.log(`Nothing changed / ${hours} : ${minutes}`);
+        console.log("Nothing changed");
       }
     }
   });
@@ -301,10 +265,9 @@ let checkTodayAlarm = schedule.scheduleJob('0 15 0 * * *', () => {
       console.log(`${today} THE DRAW 예정이 없습니다.`);
     }
     else {
-      // for (let data of drawDatas) {
-      //   setAlarm(data);
-      // }
-      console.log(drawDatas);
+      for (let data of drawDatas) {
+        setAlarm(data);
+      }
     }
   });
 });
