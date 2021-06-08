@@ -1,36 +1,32 @@
 'use strict';
-const express = require("express");
-const dotenv = require("dotenv");
-const schedule = require("node-schedule");
-const axios = require("axios");
-const cheerio = require("cheerio");
-const mysql = require("mysql");
-const path = require('path');
-// const Database = require('./controllers/drawInfo');
-const fs = require("fs");
+const EXPRESS = require("express");
+const DOTENV = require("dotenv");
+const SCHEDULE = require("node-schedule");
+const AXIOS = require("axios");
+const CHEERIO = require("cheerio");
+const MYSQL = require("mysql");
+const PATH = require('path');
+const FS = require("fs");
 
-const app = express();
-dotenv.config({path: './config/.env'});
+const APP = EXPRESS();
+DOTENV.config({PATH: './config/.env'});
 
-const db = mysql.createConnection({
+const DB = MYSQL.createConnection({
   host: process.env.DATABASE_HOST,
   user: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE
 });
 
-db.connect((error) => {
+DB.connect((error) => {
   if(error) {
     console.log(error);
   }
 });
 
-const publicDirectory = path.join(__dirname, './public');
-app.use(express.static(publicDirectory));
-
 async function scrapPage(url) {
   try {
-    return await axios.get(url);
+    return await AXIOS.get(url);
   }
   catch (error) {
     console.error(`${error}: cannot get html!!!!!!!!!!!!!!!!`);
@@ -43,7 +39,7 @@ async function getSneakersInfo(drawList) { // 지금은 나이키 아니면 동�
 
   for (let i = 0; i < drawList.length; i++) {
     let sneakers = await scrapPage(drawList[i].url);
-    let $ = cheerio.load(sneakers.data);
+    let $ = CHEERIO.load(sneakers.data);
     let sneakersInfo = $("aside.is-the-draw-start div");
     let imgInfo = $("div.prd-img-wrap");
     let priceReg = /\d+/g;
@@ -88,7 +84,7 @@ function loggingNumberDrawProducts(numberProducts) {
   const timeStamp = date.toLocaleString();
   const logData = `${timeStamp} THE DRAW products num: \n${numberProducts}\n`;
 
-  fs.appendFile(logPath, logData, (err) => {
+  FS.appendFile(logPath, logData, (err) => {
     if (err) {
       throw err;
     }
@@ -100,7 +96,7 @@ function loggingNumberDrawProducts(numberProducts) {
 
 async function getDrawList(brandUrl, brandName) {
   const HTML = await scrapPage(brandUrl);
-  let $ = cheerio.load(HTML.data);
+  let $ = CHEERIO.load(HTML.data);
   let drawList = [];
   let bodyList = $("ul.gallery li");
   let strDraw = "THE DRAW 진행예정";  //응모중에는 'THE DRAW 응모하기 / 응모 끝나면 THE DRAW 응모 마감'
@@ -118,6 +114,7 @@ async function getDrawList(brandUrl, brandName) {
         sneakers_name: $(this).find('h6.headline-3').text(),
         url: productUrl
       };
+
       drawList.push(product);
     }
   });
@@ -131,7 +128,7 @@ async function insertNewProducts(newProducts) {
   for (let i = 0; i < newProducts.length; i++) {
     const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
 
-    db.query(INSERT_PRODUCT_SQL, {
+    DB.query(INSERT_PRODUCT_SQL, {
       brand_name: newProducts[i].brand_name, 
       type_name: newProducts[i].type_name, 
       sneakers_name: newProducts[i].sneakers_name, 
@@ -156,9 +153,9 @@ async function insertNewProducts(newProducts) {
 
 function setAlarm(todayDraw) {
   let drawStartTime = new Date(todayDraw.draw_start_time);
-  let drawStartAlarm = schedule.scheduleJob(drawStartTime, () => {
+  let drawStartAlarm = SCHEDULE.scheduleJob(drawStartTime, () => {
     console.log(`${todayDraw.brand_name} ${todayDraw.type_name} ${todayDraw.sneakers_name} THE DRAW 가 시작되었습니다!`);
-    // 여기서 푸쉬 들어가야함 그리고 그날 발매하는게 여러게면 아직 처리 안함
+    //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
   });
   let startYear = drawStartTime.getFullYear();
   let startMonth = drawStartTime.getMonth() + 1;
@@ -169,12 +166,12 @@ function setAlarm(todayDraw) {
 
   //  확인하지 않았으면 중간에 한번 더 알려주는거 
   let drawEndTime = new Date(todayDraw.draw_end_time);
-  let drawEndAlarm = schedule.scheduleJob(drawEndTime, () => {
+  let drawEndAlarm = SCHEDULE.scheduleJob(drawEndTime, () => {
     // 드로우 종료되었습니다.
     console.log(`${todayDraw.brand_name} ${todayDraw.type_name} ${todayDraw.sneakers_name}의 Draw가 종료되었습니다.`);
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
-    db.query(DELETE_DRAW_SQL, [todayDraw.id], (err, complete) => {
+    DB.query(DELETE_DRAW_SQL, [todayDraw.id], (err, complete) => {
       if (err) {
         console.log(err);
       }
@@ -191,12 +188,12 @@ function getDrawDatas(drawList) {
   let brandName = "Nike"; // re 나중에 여러 브랜드 일때
   const DRAW_INFO_SQL = "SELECT type_name, sneakers_name FROM draw_info WHERE brand_name=?";
 
-  db.query(DRAW_INFO_SQL, [brandName], async(err, result) => {
+  DB.query(DRAW_INFO_SQL, [brandName], async(err, result) => {
     if (err) {
       console.log(err);
     }
     else if (result.length === 0) {
-      insertNewProducts(await getSneakersInfo(newProducts));
+      insertNewProducts(await getSneakersInfo(drawList));
     }
     else {
       for (let i = 0; i < result.length; i++) { // 줄일 수 있으면 줄여봐
@@ -211,7 +208,7 @@ function getDrawDatas(drawList) {
         }
       }
     
-      if(newProducts.length) {  // 하나씩 보내면 어떨까?
+      if(newProducts.length) {
         insertNewProducts(await getSneakersInfo(newProducts));
       }
       else {
@@ -221,12 +218,12 @@ function getDrawDatas(drawList) {
   });
 }
 
-let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => {
+let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async() => {
   let startTime = new Date();
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
   const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
   
-  db.query(NUMBER_OF_DRAW_DATA_SQL, ["Nike"], (err, drawData) => {
+  DB.query(NUMBER_OF_DRAW_DATA_SQL, ["Nike"], (err, drawData) => {
     if (err) {
       console.log(err);
     }
@@ -244,34 +241,31 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('40 * * * * *', async() => 
   });
 });
 
-let checkNewDrawsEveryday = schedule.scheduleJob('0 10 0 * * *', async() => {
+let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async() => {
   let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
   getDrawDatas(drawList);
 });
 
-let checkTodayAlarm = schedule.scheduleJob('0 15 0 * * *', () => {
-  const day = new Date();
-  let year = day.getFullYear();
-  let month = day.getMonth() + 1;
-  let date = day.getDate();
-  const today = `${year}-${month}-${date}`;
+let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
+  const DAY = new Date();
+  const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
 
-  db.query(DRAW_INFO_SQL, [today], (err, drawDatas) => {
+  DB.query(DRAW_INFO_SQL, [TODAY], (err, todayDrawDatas) => {
     if (err) {
       console.log(err);
     }
-    else if (drawDatas.length === 0) {
-      console.log(`${today} THE DRAW 예정이 없습니다.`);
+    else if (todayDrawDatas.length === 0) {
+      console.log(`${TODAY} THE DRAW 예정이 없습니다.`);
     }
     else {
-      for (let data of drawDatas) {
+      for (let data of todayDrawDatas) {
         setAlarm(data);
       }
     }
   });
 });
 
-app.listen(3000, () => {
+APP.listen(3000, () => {
   console.log("Server is running like a Ninja");
 });
