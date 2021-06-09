@@ -1,15 +1,15 @@
 'use strict';
 const EXPRESS = require("express");
-const DOTENV = require("dotenv");
+const dotenv = require("dotenv");
 const SCHEDULE = require("node-schedule");
 const AXIOS = require("axios");
 const CHEERIO = require("cheerio");
 const MYSQL = require("mysql");
-const PATH = require('path');
+const path = require('path');
 const FS = require("fs");
 
 const APP = EXPRESS();
-DOTENV.config({PATH: './config/.env'});
+dotenv.config({path: './config/.env'});
 
 const DB = MYSQL.createConnection({
   host: process.env.DATABASE_HOST,
