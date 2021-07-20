@@ -9,9 +9,14 @@ const path = require('path');
 const FS = require("fs");
 const assert = require("assert");
 const { Console } = require("console");
+const Draw = require("./Draw");
 
 const APP = EXPRESS();
 dotenv.config({ path: './config/.env' });
+
+let nike = new Draw("Nike", "https://www.nike.com/kr/launch/");
+console.log(nike.url);
+console.log(nike.brandName);
 
 const DB = MYSQL.createConnection({
   host: process.env.DATABASE_HOST,
