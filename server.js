@@ -14,10 +14,6 @@ const Draw = require("./Draw");
 const APP = EXPRESS();
 dotenv.config({ path: './config/.env' });
 
-let nike = new Draw("Nike", "https://www.nike.com/kr/launch/");
-console.log(nike.url);
-console.log(nike.brandName);
-
 const DB = MYSQL.createConnection({
   host: process.env.DATABASE_HOST,
   user: process.env.DATABASE_USER,
@@ -131,7 +127,7 @@ async function insertNewProducts(newProducts) {
   }
 }
 
-async function getDrawList(brandUrl, brandName) {
+async function getDrawList(brandName, brandUrl) {
   const HTML = await scrapPage(brandUrl);
   let $ = CHEERIO.load(HTML.data);
   let drawList = [];
@@ -160,9 +156,8 @@ async function getDrawList(brandUrl, brandName) {
   return drawList;
 }
 
-function checkDrawDatas(drawList) {
+function checkDrawDatas(brandName, drawList) {
   let newProducts = [];
-  let brandName = "Nike"; // re 나중에 여러 브랜드 일때 drawList에 담아서 와야함
   const DRAW_INFO_SQL = "SELECT full_name FROM draw_info WHERE brand_name=?";
 
   DB.query(DRAW_INFO_SQL, [brandName], async (err, drawDatas) => {
@@ -220,7 +215,8 @@ function setAlarm(todayDrawProduct) {
 
 let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () => {
   let startTime = new Date();
-  let drawList = await getDrawList("https://www.nike.com/kr/launch/", "Nike");
+  const Nike = new Draw("Nike", "https://www.nike.com/kr/launch/");
+  let drawList = await getDrawList(Nike.brandName, Nike.url);
   const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
 
   DB.query(NUMBER_OF_DRAW_DATA_SQL, ["Nike"], async (err, drawData) => {
@@ -233,7 +229,7 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () =>
         // 만약 시간이 09:00 ~ 21:00면 바로 알림
       }
       else {
-        checkDrawDatas(drawList);
+        checkDrawDatas(Nike.brandName, drawList);
       }
     }
     else {
@@ -247,7 +243,8 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () =>
 });
 
 let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
-  checkDrawDatas(await getDrawList("https://www.nike.com/kr/launch/", "Nike"));
+  const Nike = new Draw("Nike", "https://www.nike.com/kr/launch/");
+  checkDrawDatas(Nike.brandName, await getDrawList(Nike.brandName, Nike.url));
 });
 
 let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
