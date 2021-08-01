@@ -46,13 +46,15 @@ class NikeDraw {
                 this.drawList.push(product);
             }
         });
+
+        return this.drawList;
     }
 
-    async getSneakersInfo() { // 지금은 나이키 아니면 동작 안함
+    async getSneakersInfo(newDrawList) {
         console.log("가져오는 중...");
       
-        for (let i = 0; i < this.drawList.length; i++) {
-            let sneakers = await scrapPage(this.drawList[i].url);
+        for (let i = 0; i < newDrawList.length; i++) {
+            let sneakers = await scrapPage(newDrawList[i].url);
             let $ = CHEERIO.load(sneakers.data);
             let sneakersInfo = $("aside.is-the-draw-start div");
             let imgInfo = $("div.prd-img-wrap");
@@ -77,10 +79,10 @@ class NikeDraw {
             let drawDateInfo = `${years}-${month}-${date}`;
         
             this.newProducts[i] = {
-                brand_name: this.drawList[i].brand_name,
-                type_name: this.drawList[i].type_name,
-                sneakers_name: this.drawList[i].sneakers_name,
-                full_name: this.drawList[i].full_name,
+                brand_name: newDrawList[i].brand_name,
+                type_name: newDrawList[i].type_name,
+                sneakers_name: newDrawList[i].sneakers_name,
+                full_name: newDrawList[i].full_name,
                 price: price,
                 draw_date: drawDateInfo,
                 draw_start_time: `${drawDateInfo} ${drawTimeInfo[0]}`,
@@ -91,6 +93,8 @@ class NikeDraw {
                 img_url: $(imgInfo).find('img.image-component').attr('src')
             };
         }
+
+        return this.newProducts;
     }
 }
 

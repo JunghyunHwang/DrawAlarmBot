@@ -7,7 +7,6 @@ const CHEERIO = require("cheerio");
 const MYSQL = require("mysql");
 const path = require('path');
 const FS = require("fs");
-const assert = require("assert");
 const NikeDraw = require("./NikeDraw");
 
 const APP = EXPRESS();
@@ -157,7 +156,7 @@ async function getDrawList(brandName, brandUrl) {
 }
 */
 function checkDrawDatas(brand) {
-  let newProducts = [];
+  let newDrawList = [];
   const DRAW_INFO_SQL = "SELECT full_name FROM draw_info WHERE brand_name=?";
 
   DB.query(DRAW_INFO_SQL, [brand.name], async (err, drawDatas) => {
@@ -167,12 +166,12 @@ function checkDrawDatas(brand) {
     else {
       for (let i = 0; i < brand.drawList.length; i++) {
         if (drawDatas.indexOf(brand.drawList[i].full_name) < 0) {
-          newProducts.push(brand.drawList[i]);
+          newDrawList.push(brand.drawList[i]);
         }
       }
 
-      if (newProducts.length) {
-        insertNewProducts(await getSneakersInfo(newProducts));
+      if (newDrawList.length) {
+        insertNewProducts(await brand.getSneakersInfo(newDrawList));
         // 만약 시간이 09:00 ~ 21:00면 바로 알림
       }
       else {
@@ -214,24 +213,26 @@ function setAlarm(todayDrawProduct) {
 }
 
 const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
+let brands = [];
+brands.push(Nike);
+console.log(brands[0]);
 
 let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () => {
   let startTime = new Date();
-  Nike.getDrawList(); //나중에는 Nike adidas등 여러 브랜드들을 배열에 담아서 돌면서 확인함
-  console.log(Nike.drawList.length);
+  let drawList = await Nike.getDrawList(); // 나중에는 Nike, adidas등 여러 브랜드들을 배열에 담아서 돌면서 확인해야 함
   const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
 
-  DB.query(NUMBER_OF_DRAW_DATA_SQL, ["Nike"], async (err, drawData) => {
+  DB.query(NUMBER_OF_DRAW_DATA_SQL, [Nike.name], async (err, drawData) => {
     if (err) {
       console.log(err);
     }
-    else if (Nike.drawList.length != drawData[0]['COUNT(*)']) {
+    else if (drawList.length != drawData[0]['COUNT(*)']) {
       if (drawData[0]['COUNT(*)'] == 0) {
-        insertNewProducts(await Nike.getSneakersInfo());
+        insertNewProducts(await Nike.getSneakersInfo(drawList));
         // 만약 시간이 09:00 ~ 21:00면 바로 알림
       }
       else {
-        checkDrawDatas(Nike.brandName, drawList);
+        checkDrawDatas(Nike);
       }
     }
     else {
@@ -245,8 +246,8 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () =>
 });
 
 let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
-  const Nike = new Draw("Nike", "https://www.nike.com/kr/launch/");
-  checkDrawDatas(Nike.brandName, await getDrawList(Nike.brandName, Nike.url));
+  Nike.getDrawList();
+  checkDrawDatas(Nike);
 });
 
 let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
