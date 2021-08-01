@@ -24,16 +24,7 @@ DB.connect((error) => {
     console.log(error);
   }
 });
-/*
-async function scrapPage(url) {
-  try {
-    return await AXIOS.get(url);
-  }
-  catch (error) {
-    console.error(`${error}: cannot get html!!!!!!!!!!!!!!!!`);
-  }
-}
-*/
+
 function loggingNumberOfDrawProducts(numberProducts) {
   const logPath = './config/Get-snkrs-info-log.txt';
   const date = new Date();
@@ -50,53 +41,6 @@ function loggingNumberOfDrawProducts(numberProducts) {
   });
 }
 
-/*
-async function getSneakersInfo(drawList) { // 지금은 나이키 아니면 동작 안함
-  console.log("가져오는 중...");
-  let products = [];
-
-  for (let i = 0; i < drawList.length; i++) {
-    let sneakers = await scrapPage(drawList[i].url);
-    let $ = CHEERIO.load(sneakers.data);
-    let sneakersInfo = $("aside.is-the-draw-start div");
-    let imgInfo = $("div.prd-img-wrap");
-    let priceRegex = /\d+/g;
-    let timeRegex = /(\d{2}:\d{2})/g;
-    let dateRegex = /(\d{1,2})\/(\d{1,2})/g;
-
-    let tempPrice = $(sneakersInfo).find('div.fs16-md').text();
-    let resultPrice = tempPrice.match(priceRegex);    //  100만원 하는 신발은 구별 못함
-    let price = resultPrice[0] + resultPrice[1];
-    let releaseInfo = $(sneakersInfo).find('p.draw-info').text();
-
-    let drawTimeInfo = releaseInfo.match(timeRegex);
-    let dateRegResult = dateRegex.exec(releaseInfo);
-    let currentDate = new Date();
-    let years = currentDate.getFullYear();  // 다음해로 넘어가는 12월에 문제 생길 가능성 있음
-    let month = dateRegResult[1];
-    let date = dateRegResult[2];
-
-    let drawDateInfo = `${years}-${month}-${date}`;
-
-    products[i] = {
-      brand_name: drawList[i].brand_name,
-      type_name: drawList[i].type_name,
-      sneakers_name: drawList[i].sneakers_name,
-      full_name: drawList[i].full_name,
-      price: price,
-      draw_date: drawDateInfo,
-      draw_start_time: `${drawDateInfo} ${drawTimeInfo[0]}`,
-      draw_end_time: `${drawDateInfo} ${drawTimeInfo[1]}`,
-      announcement_time: `${drawDateInfo} ${drawTimeInfo[2]}`,
-      purchase_time: `${drawDateInfo} ${drawTimeInfo[3]}`,
-      url: drawList[i].url,
-      img_url: $(imgInfo).find('img.image-component').attr('src')
-    };
-  }
-
-  return products;
-}
-*/
 function insertNewProducts(newProducts) {
   console.log("데이터 베이스에 저장 중...");
   const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
@@ -125,37 +69,9 @@ function insertNewProducts(newProducts) {
     });
   }
 }
-/*
-async function getDrawList(brandName, brandUrl) {
-  const HTML = await scrapPage(brandUrl);
-  let $ = CHEERIO.load(HTML.data);
-  let drawList = [];
-  let bodyList = $("ul.gallery li");
-  let strDraw = "THE DRAW 진행예정";  //응모중에는 'THE DRAW 응모하기 / 응모 끝나면 THE DRAW 응모 마감'
 
-  bodyList.each(function (i, elem) {
-    let releaseType = $(this).find('div.ncss-btn-primary-dark').text();
-
-    // Check release type
-    if (releaseType.indexOf(strDraw) != -1) {
-      let productUrl = "https://www.nike.com";
-      productUrl += $(this).find('a.comingsoon').attr('href');
-      let product = {
-        brand_name: brandName,
-        type_name: $(this).find('h3.headline-5').text(),
-        sneakers_name: $(this).find('h6.headline-3').text(),
-        full_name: `${$(this).find('h3.headline-5').text()} ${$(this).find('h6.headline-3').text()}`,
-        url: productUrl
-      };
-
-      drawList.push(product);
-    }
-  });
-
-  return drawList;
-}
-*/
 function checkDrawDatas(brand) {
+  console.log("데이터 베이스 열어봄");
   let newDrawList = [];
   const DRAW_INFO_SQL = "SELECT full_name FROM draw_info WHERE brand_name=?";
 
@@ -215,39 +131,43 @@ function setAlarm(todayDrawProduct) {
 const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
 let brands = [];
 brands.push(Nike);
-console.log(brands[0]);
 
 let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () => {
   let startTime = new Date();
-  let drawList = await Nike.getDrawList(); // 나중에는 Nike, adidas등 여러 브랜드들을 배열에 담아서 돌면서 확인해야 함
-  const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
 
-  DB.query(NUMBER_OF_DRAW_DATA_SQL, [Nike.name], async (err, drawData) => {
-    if (err) {
-      console.log(err);
-    }
-    else if (drawList.length != drawData[0]['COUNT(*)']) {
-      if (drawData[0]['COUNT(*)'] == 0) {
-        insertNewProducts(await Nike.getSneakersInfo(drawList));
-        // 만약 시간이 09:00 ~ 21:00면 바로 알림
+  brands.forEach(async (brand, index) => {
+    let drawList = await brand.getDrawList();
+    const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
+
+    DB.query(NUMBER_OF_DRAW_DATA_SQL, [brand.name], async (err, drawData) => {
+      if (err) {
+        console.log(err);
+      }
+      else if (drawList.length != drawData[0]['COUNT(*)']) {
+        if (drawData[0]['COUNT(*)'] == 0) {
+          insertNewProducts(await brand.getSneakersInfo(drawList));
+          // 만약 시간이 09:00 ~ 21:00면 바로 알림
+        }
+        else {
+          checkDrawDatas(brand);
+        }
       }
       else {
-        checkDrawDatas(Nike);
+        console.log("Nothing changed");
+        console.log("---------------");
+        let endTime = new Date();
+        let resultTime = (endTime - startTime) / 1000;
+        console.log(`${resultTime}초 걸림!`);
       }
-    }
-    else {
-      let endTime = new Date();
-      let resultTime = (endTime - startTime) / 1000;
-      console.log(`${resultTime}초 걸림!`);
-      console.log("Nothing changed");
-      console.log("---------------");
-    }
+    });
   });
 });
 
 let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
-  Nike.getDrawList();
-  checkDrawDatas(Nike);
+  brands.forEach(async (brand, index) => {
+    await brand.getDrawList();
+    checkDrawDatas(brand);
+  });
 });
 
 let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
