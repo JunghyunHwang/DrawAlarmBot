@@ -8,8 +8,7 @@ const MYSQL = require("mysql");
 const path = require('path');
 const FS = require("fs");
 const assert = require("assert");
-const { Console } = require("console");
-const Draw = require("./Draw");
+const NikeDraw = require("./NikeDraw");
 
 const APP = EXPRESS();
 dotenv.config({ path: './config/.env' });
@@ -26,7 +25,7 @@ DB.connect((error) => {
     console.log(error);
   }
 });
-
+/*
 async function scrapPage(url) {
   try {
     return await AXIOS.get(url);
@@ -35,8 +34,8 @@ async function scrapPage(url) {
     console.error(`${error}: cannot get html!!!!!!!!!!!!!!!!`);
   }
 }
-
-function loggingNumberDrawProducts(numberProducts) {
+*/
+function loggingNumberOfDrawProducts(numberProducts) {
   const logPath = './config/Get-snkrs-info-log.txt';
   const date = new Date();
   const timeStamp = date.toLocaleString();
@@ -52,6 +51,7 @@ function loggingNumberDrawProducts(numberProducts) {
   });
 }
 
+/*
 async function getSneakersInfo(drawList) { // 지금은 나이키 아니면 동작 안함
   console.log("가져오는 중...");
   let products = [];
@@ -97,8 +97,8 @@ async function getSneakersInfo(drawList) { // 지금은 나이키 아니면 동�
 
   return products;
 }
-
-async function insertNewProducts(newProducts) {
+*/
+function insertNewProducts(newProducts) {
   console.log("데이터 베이스에 저장 중...");
   const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
   
@@ -126,7 +126,7 @@ async function insertNewProducts(newProducts) {
     });
   }
 }
-
+/*
 async function getDrawList(brandName, brandUrl) {
   const HTML = await scrapPage(brandUrl);
   let $ = CHEERIO.load(HTML.data);
@@ -155,19 +155,19 @@ async function getDrawList(brandName, brandUrl) {
 
   return drawList;
 }
-
-function checkDrawDatas(brandName, drawList) {
+*/
+function checkDrawDatas(brand) {
   let newProducts = [];
   const DRAW_INFO_SQL = "SELECT full_name FROM draw_info WHERE brand_name=?";
 
-  DB.query(DRAW_INFO_SQL, [brandName], async (err, drawDatas) => {
+  DB.query(DRAW_INFO_SQL, [brand.name], async (err, drawDatas) => {
     if (err) {
       console.log(err);
     }
     else {
-      for (let i = 0; i < drawList.length; i++) {
-        if (drawDatas.indexOf(drawList[i].full_name) < 0) {
-          newProducts.push(drawList[i]);
+      for (let i = 0; i < brand.drawList.length; i++) {
+        if (drawDatas.indexOf(brand.drawList[i].full_name) < 0) {
+          newProducts.push(brand.drawList[i]);
         }
       }
 
@@ -213,19 +213,21 @@ function setAlarm(todayDrawProduct) {
   });
 }
 
+const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
+
 let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () => {
   let startTime = new Date();
-  const Nike = new Draw("Nike", "https://www.nike.com/kr/launch/");
-  let drawList = await getDrawList(Nike.brandName, Nike.url);
+  Nike.getDrawList(); //나중에는 Nike adidas등 여러 브랜드들을 배열에 담아서 돌면서 확인함
+  console.log(Nike.drawList.length);
   const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
 
   DB.query(NUMBER_OF_DRAW_DATA_SQL, ["Nike"], async (err, drawData) => {
     if (err) {
       console.log(err);
     }
-    else if (drawList.length != drawData[0]['COUNT(*)']) {
+    else if (Nike.drawList.length != drawData[0]['COUNT(*)']) {
       if (drawData[0]['COUNT(*)'] == 0) {
-        insertNewProducts(await getSneakersInfo(drawList));
+        insertNewProducts(await Nike.getSneakersInfo());
         // 만약 시간이 09:00 ~ 21:00면 바로 알림
       }
       else {
