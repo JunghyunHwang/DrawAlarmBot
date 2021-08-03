@@ -1,15 +1,11 @@
 'use strict';
-const EXPRESS = require("express");
 const dotenv = require("dotenv");
 const SCHEDULE = require("node-schedule");
-const AXIOS = require("axios");
-const CHEERIO = require("cheerio");
 const MYSQL = require("mysql");
 const path = require('path');
 const FS = require("fs");
 const NikeDraw = require("./NikeDraw");
 
-const APP = EXPRESS();
 dotenv.config({ path: './config/.env' });
 
 const DB = MYSQL.createConnection({
@@ -135,10 +131,18 @@ brands.push(Nike);
 let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () => {
   let startTime = new Date();
 
-  brands.forEach(async (brand, index) => {
+  for (let brand of brands) {
     let drawList = await brand.getDrawList();
-    const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
 
+    if (drawList.length == 0)
+    {
+      let endTime = new Date();
+      let resultTime = (endTime - startTime) / 1000;
+      console.log(`${resultTime}초 걸림!`);
+      continue;
+    }
+
+    const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
     DB.query(NUMBER_OF_DRAW_DATA_SQL, [brand.name], async (err, drawData) => {
       if (err) {
         console.log(err);
@@ -160,7 +164,7 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () =>
         console.log(`${resultTime}초 걸림!`);
       }
     });
-  });
+  }
 });
 
 let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
@@ -170,6 +174,8 @@ let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
   });
 });
 
+
+// 이거는 server에서 해줘야함
 let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
@@ -188,8 +194,4 @@ let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
       }
     }
   });
-});
-
-APP.listen(3000, () => {
-  console.log("Server is running like a Ninja");
 });
