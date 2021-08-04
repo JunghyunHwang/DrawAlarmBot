@@ -129,7 +129,7 @@ const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
 let brands = [];
 brands.push(Nike);
 
-let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () => {
+let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('20 * * * * *', async () => {
   let startTime = new Date();
 
   for (let brand of brands) {
@@ -137,9 +137,6 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () =>
 
     if (drawList.length == 0)
     {
-      let endTime = new Date();
-      let resultTime = (endTime - startTime) / 1000;
-      console.log(`${resultTime}초 걸림!`);
       continue;
     }
 
@@ -158,11 +155,11 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('40 * * * * *', async () =>
         }
       }
       else {
-        console.log("Nothing changed");
-        console.log("---------------");
         let endTime = new Date();
         let resultTime = (endTime - startTime) / 1000;
         console.log(`${resultTime}초 걸림!`);
+        console.log("Nothing changed");
+        console.log("---------------");
       }
     });
   }
