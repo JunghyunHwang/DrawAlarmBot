@@ -40,7 +40,7 @@ function loggingNumberOfDrawProducts(numberProducts) {
 function insertNewProducts(newProducts) {
   console.log("데이터 베이스에 저장 중...");
   const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
-  
+  //  re type name too long
   for (let i = 0; i < newProducts.length; i++) {
     DB.query(INSERT_PRODUCT_SQL, {
       brand_name: newProducts[i].brand_name,
@@ -76,15 +76,23 @@ function checkDrawDatas(brand) {
       console.log(err);
     }
     else {
-      for (let i = 0; i < brand.drawList.length; i++) {
-        if (drawDatas.indexOf(brand.drawList[i].full_name) < 0) {
-          newDrawList.push(brand.drawList[i]);
+      for (let sneakers of brand.drawList) {
+        let isNewDraw = true;
+
+        for (let data of drawDatas) {
+          if (data.full_name == sneakers.full_name) {
+            isNewDraw = false;
+            break;
+          }
+        }
+
+        if (isNewDraw) {
+          newDrawList.push(sneakers);
         }
       }
 
-      if (newDrawList.length) {
+      if (newDrawList.length > 0) {
         insertNewProducts(await brand.getSneakersInfo(newDrawList));
-        // 만약 시간이 09:00 ~ 21:00면 바로 알림
       }
       else {
         console.log("저장 할게 없어");
