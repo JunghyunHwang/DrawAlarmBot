@@ -174,10 +174,10 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('20 * * * * *', async () =>
 });
 
 let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
-  brands.forEach(async (brand, index) => {
+  for (let brand of brans) {
     await brand.getDrawList();
     checkDrawDatas(brand);
-  });
+  }
 });
 
 // re server에서 해야 하는일
