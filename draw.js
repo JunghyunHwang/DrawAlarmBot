@@ -22,7 +22,7 @@ DB.connect((error) => {
 });
 
 function loggingNumberOfDrawProducts(numberProducts) {
-  const logPath = './config/Get-snkrs-info-log.txt';
+  const logPath = './config/GetDrawInfoLog.txt';
   const date = new Date();
   const timeStamp = date.toLocaleString();
   const logData = `${timeStamp} THE DRAW products num: \n${numberProducts}\n`;
@@ -142,6 +142,7 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('20 * * * * *', async () =>
 
   for (let brand of brands) {
     let drawList = await brand.getDrawList();
+    loggingNumberOfDrawProducts(drawList.length);
 
     if (drawList.length == 0)
     {
