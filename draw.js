@@ -2,7 +2,8 @@
 const dotenv = require("dotenv");
 const SCHEDULE = require("node-schedule");
 const MYSQL = require("mysql");
-const path = require('path');
+const path = require("path");
+const nodemailer = require("nodemailer");
 const FS = require("fs");
 const NikeDraw = require("./brands/NikeDraw");
 
@@ -21,6 +22,37 @@ DB.connect((error) => {
   }
 });
 
+async function sendMailTest(todayDrawProduct) {
+  let startTime = new Date(todayDrawProduct.draw_start_time);
+  let endTime = new Date(todayDrawProduct.draw_end_time);
+  let minutes = Math.floor((endTime - startTime) / 60000);
+  let receiver = getMailReceiver();
+
+  const title = `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name} DRAW가 시작 되었습니다!`;
+  const message = `
+    <p><h2>${todayDrawProduct.brand_name} ${todayDrawProduct.full_name} DRAW가 시작 되었습니다!</h2></p>
+    <p><span style="font-size:20px">${todayDrawProduct.draw_start_time} ~ ${todayDrawProduct.draw_end_time} </p>
+    <p><span style="font-size:20px">${minutes}</span>분간 진행될 예정입니다. </p>
+    <p>${todayDrawProduct.product_url}</p>`;
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.NODEMAILER_USER,
+      pass: process.env.NODEMAILER_PASS
+    }
+  });
+
+  let info = await transporter.sendMail({
+    from: `"Ja Hwang" <${process.env.NODEMAILER_USER}>`,
+    to: receiver,
+    subject: title,
+    html: message
+  });
+}
+
 function loggingNumberOfDrawProducts(numberProducts) {
   const logPath = './config/GetDrawInfoLog.txt';
   const date = new Date();
@@ -35,6 +67,13 @@ function loggingNumberOfDrawProducts(numberProducts) {
       console.log("Got a number of products");
     }
   });
+}
+
+function getMailReceiver()
+{
+  const receiverFilePath = "./config/receiver.txt";
+  let data = FS.readFileSync(receiverFilePath).toString().split('\n');
+  return data;
 }
 
 function insertNewProducts(newProducts) {
@@ -108,6 +147,7 @@ function setAlarm(todayDrawProduct) {
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
     //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
+    sendMailTest(todayDrawProduct).catch(console.error);
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
     DB.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
