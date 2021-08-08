@@ -22,7 +22,7 @@ DB.connect((error) => {
 });
 
 function loggingNumberOfDrawProducts(numberProducts) {
-  const logPath = './config/Get-snkrs-info-log.txt';
+  const logPath = './config/GetDrawInfoLog.txt';
   const date = new Date();
   const timeStamp = date.toLocaleString();
   const logData = `${timeStamp} THE DRAW products num: \n${numberProducts}\n`;
@@ -137,11 +137,12 @@ const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
 let brands = [];
 brands.push(Nike);
 
-let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('20 * * * * *', async () => {
+let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('20 30 * * * *', async () => {
   let startTime = new Date();
 
   for (let brand of brands) {
     let drawList = await brand.getDrawList();
+    loggingNumberOfDrawProducts(drawList.length);
 
     if (drawList.length == 0)
     {
