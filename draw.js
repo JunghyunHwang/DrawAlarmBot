@@ -177,7 +177,7 @@ const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
 let brands = [];
 brands.push(Nike);
 
-let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('20 * * * * *', async () => {
+let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('20 30 * * * *', async () => {
   let startTime = new Date();
 
   for (let brand of brands) {
