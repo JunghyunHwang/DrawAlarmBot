@@ -61,6 +61,13 @@ async function sendMail(message) {
   });
 }
 
+function getMailReceiver()
+{
+  const receiverFilePath = "./config/receiver.txt";
+  let data = FS.readFileSync(receiverFilePath).toString().split('\n');
+  return data;
+}
+
 function loggingNumberOfDrawProducts(numberProducts) {
   const logPath = './config/GetDrawInfoLog.txt';
   const date = new Date();
@@ -75,13 +82,6 @@ function loggingNumberOfDrawProducts(numberProducts) {
       console.log("Got a number of products");
     }
   });
-}
-
-function getMailReceiver()
-{
-  const receiverFilePath = "./config/receiver.txt";
-  let data = FS.readFileSync(receiverFilePath).toString().split('\n');
-  return data;
 }
 
 function insertNewProducts(newProducts) {
@@ -153,22 +153,12 @@ function setAlarm(todayDrawProduct) {
   const DRAW_START_TIME = new Date(todayDrawProduct.draw_start_time);
   const SNEAKERS_NAME = `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}`;
   const message = getEmailMessage(todayDrawProduct);
-  try { // test
-    sendMail(message);
-  }
-  catch (error) {
-    console.log("이메일 보내기 실패");
-  }
+  sendMail(message).catch(console.log("메일 보내기 실패"));
 
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
     //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
-    try { // test
-      sendMail(message);
-    }
-    catch (error) {
-      console.log("이메일 보내기 실패");
-    }
+    sendMail(message).catch(console.log("메일 보내기 실패"));
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
     DB.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
@@ -236,7 +226,7 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 30 * * * *', async () =>
   }
 });
 
-let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 57 1 * * *', async () => {
+let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
   for (let brand of brands) {
     await brand.getDrawList();
     checkDrawDatas(brand);
@@ -244,7 +234,7 @@ let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 57 1 * * *', async () => {
 });
 
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 58 1 * * *', () => {
+let checkTodayDraw = SCHEDULE.scheduleJob('0 30 2 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
@@ -255,17 +245,12 @@ let checkTodayDraw = SCHEDULE.scheduleJob('0 58 1 * * *', () => {
     }
     else if (todayDrawDatas.length === 0) {
       console.log(`${TODAY} THE DRAW 예정이 없습니다.`);
+      const message = {
+        title: "THE DRAW 예정이 없습니다.",
+        contents: ""
+      };
       
-      try { // test
-        const message = {
-          title: "예정 없음",
-          contents: `${TODAY} THE DRAW 예정이 없습니다.`
-        };
-        sendMail(message);
-      }
-      catch (error) {
-        console.log("이메일 보내기 실패");
-      }
+      sendMail(message).catch(console.log("메일 보내기 실패"));
     }
     else {
       for (let data of todayDrawDatas) {
