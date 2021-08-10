@@ -236,7 +236,7 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('20 30 * * * *', async () =
   }
 });
 
-let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 0 1 * * *', async () => {
+let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 1 * * *', async () => {
   for (let brand of brans) {
     await brand.getDrawList();
     checkDrawDatas(brand);
@@ -244,7 +244,7 @@ let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 0 1 * * *', async () => {
 });
 
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 5 1 * * *', () => {
+let checkTodayDraw = SCHEDULE.scheduleJob('0 12 1 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
