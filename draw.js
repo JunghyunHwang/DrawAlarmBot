@@ -22,18 +22,26 @@ DB.connect((error) => {
   }
 });
 
-async function sendMailTest(todayDrawProduct) {
+function getEmailMessage(todayDrawProduct)
+{
   let startTime = new Date(todayDrawProduct.draw_start_time);
   let endTime = new Date(todayDrawProduct.draw_end_time);
   let minutes = Math.floor((endTime - startTime) / 60000);
-  let receiver = getMailReceiver();
-
-  const title = `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name} DRAW가 시작 되었습니다!`;
-  const message = `
+  let message = {
+    title: `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name} DRAW가 시작 되었습니다!`,
+    contents: `
     <p><h2>${todayDrawProduct.brand_name} ${todayDrawProduct.full_name} DRAW가 시작 되었습니다!</h2></p>
     <p><span style="font-size:20px">${todayDrawProduct.draw_start_time} ~ ${todayDrawProduct.draw_end_time} </p>
     <p><span style="font-size:20px">${minutes}</span>분간 진행될 예정입니다. </p>
-    <p>${todayDrawProduct.product_url}</p>`;
+    <p>${todayDrawProduct.product_url}</p>`
+  };
+
+  return message;
+}
+
+async function sendMail(message) {
+  let receiver = getMailReceiver();
+
   let transporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
@@ -48,8 +56,8 @@ async function sendMailTest(todayDrawProduct) {
   let info = await transporter.sendMail({
     from: `"Ja Hwang" <${process.env.NODEMAILER_USER}>`,
     to: receiver,
-    subject: title,
-    html: message
+    subject: message.title,
+    html: message.contents
   });
 }
 
@@ -144,10 +152,12 @@ function checkDrawDatas(brand) {
 function setAlarm(todayDrawProduct) {
   const DRAW_START_TIME = new Date(todayDrawProduct.draw_start_time);
   const SNEAKERS_NAME = `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}`;
+  const message = getEmailMessage(todayDrawProduct);
+
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
     //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
-    sendMailTest(todayDrawProduct).catch(console.error);
+    sendMail(message).catch(console.error);
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
     DB.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
@@ -159,6 +169,7 @@ function setAlarm(todayDrawProduct) {
       }
     });
   });
+
   let startYear = DRAW_START_TIME.getFullYear();
   let startMonth = DRAW_START_TIME.getMonth() + 1;
   let startDate = DRAW_START_TIME.getDate();
@@ -233,6 +244,11 @@ let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
     }
     else if (todayDrawDatas.length === 0) {
       console.log(`${TODAY} THE DRAW 예정이 없습니다.`);
+      let message = {
+        title: "예정 없음",
+        contents: "`${TODAY} THE DRAW 예정이 없습니다.`"
+      };
+      sendMail(message);
     }
     else {
       for (let data of todayDrawDatas) {
