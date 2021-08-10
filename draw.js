@@ -236,15 +236,15 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 30 * * * *', async () =>
   }
 });
 
-let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 50 1 * * *', async () => {
-  for (let brand of brans) {
+let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 57 1 * * *', async () => {
+  for (let brand of brands) {
     await brand.getDrawList();
     checkDrawDatas(brand);
   }
 });
 
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 51 1 * * *', () => {
+let checkTodayDraw = SCHEDULE.scheduleJob('0 58 1 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
