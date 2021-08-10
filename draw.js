@@ -154,12 +154,23 @@ function setAlarm(todayDrawProduct) {
   const SNEAKERS_NAME = `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}`;
   const message = getEmailMessage(todayDrawProduct);
 
+  try { // test
+    sendMail(message)
+  }
+  catch (error) {
+    console.log("Email 보내기 실패");
+  }
+
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
     //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
-    sendMail(message).catch(console.error);
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
-
+    try { // test
+      sendMail(message)
+    }
+    catch (error) {
+      console.log("Email 보내기 실패");
+    }
     DB.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
       if (err) {
         console.log(err);
@@ -225,7 +236,7 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('20 30 * * * *', async () =
   }
 });
 
-let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
+let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 0 1 * * *', async () => {
   for (let brand of brans) {
     await brand.getDrawList();
     checkDrawDatas(brand);
@@ -233,7 +244,7 @@ let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
 });
 
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
+let checkTodayDraw = SCHEDULE.scheduleJob('0 5 1 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
@@ -244,11 +255,17 @@ let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
     }
     else if (todayDrawDatas.length === 0) {
       console.log(`${TODAY} THE DRAW 예정이 없습니다.`);
-      let message = {
-        title: "예정 없음",
-        contents: "`${TODAY} THE DRAW 예정이 없습니다.`"
-      };
-      sendMail(message);
+      
+      try { // test
+        const message = {
+          title: "예정 없음",
+          contents: `${TODAY} THE DRAW 예정이 없습니다.`
+        };
+        sendMail(message)
+      }
+      catch (error) {
+        console.log("Email 보내기 실패");
+      }
     }
     else {
       for (let data of todayDrawDatas) {
