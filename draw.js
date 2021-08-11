@@ -234,7 +234,7 @@ let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
 });
 
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 30 2 * * *', () => {
+let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
@@ -253,7 +253,7 @@ let checkTodayDraw = SCHEDULE.scheduleJob('0 30 2 * * *', () => {
       sendMail(message).catch(console.log("메일 보내기 실패"));
     }
     else {
-      for (let data of todayDrawDatas) {
+      for (let data of todayDrawDatas) {  // 메일 하나만 보내기
         setAlarm(data);
       }
     }
