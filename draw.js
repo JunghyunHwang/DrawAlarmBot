@@ -155,7 +155,7 @@ function setAlarm(todayDrawProduct) {
   const message = getEmailMessage(todayDrawProduct);
   sendMail(message).catch(console.log("메일 보내기 실패"));
 
-  let test = SCHEDULE.scheduleJob("0 0 1 * * *", async () => {
+  let test = SCHEDULE.scheduleJob("0 5 1 * * *", async () => {
     sendMail(message).catch(console.log("메일 보내기 실패"));
   });
 
@@ -238,7 +238,7 @@ let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
 });
 
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 50 0 * * *', () => {
+let checkTodayDraw = SCHEDULE.scheduleJob('0 0 1 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
