@@ -133,20 +133,32 @@ function setAlarm(todayDrawProduct) {
   const DRAW_START_TIME = new Date(todayDrawProduct.draw_start_time);
   const DRAW_END_TIME = new Date(todayDrawProduct.draw_end_time);
   const SNEAKERS_NAME = `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}`;
-  let minutes = Math.floor((DRAW_END_TIME - DRAW_START_TIME) / 60000);
+
+  // Formatting Draw date and time
+  let drawYear = DRAW_START_TIME.getFullYear();
+  let drawMonth = DRAW_START_TIME.getMonth() + 1;
+  let drawDate = DRAW_START_TIME.getDate();
+  let startHours = DRAW_START_TIME.getHours() < 10 ? `0${DRAW_START_TIME.getHours()}` : DRAW_START_TIME.getHours();
+  let startMinutes = DRAW_START_TIME.getMinutes() < 10 ? `0${DRAW_START_TIME.getMinutes()}` : DRAW_START_TIME.getMinutes();
+  let endHours = DRAW_END_TIME.getHours() < 10 ? `0${DRAW_END_TIME.getHours()}` : DRAW_END_TIME.getHours();
+  let endMinutes = DRAW_END_TIME.getMinutes() < 10 ? `0${DRAW_END_TIME.getMinutes()}` : DRAW_END_TIME.getMinutes();
+  console.log(`${SNEAKERS_NAME}의 Drarw 알람이 ${drawYear}-${drawMonth}-${drawDate} / ${startHours}:${startMinutes} 에 설정되었습니다.`); // re logging
+
+  let timeDifference = Math.floor((DRAW_END_TIME - DRAW_START_TIME) / 60000);
   const message = {
     title: `${SNEAKERS_NAME} DRAW가 시작 되었습니다!`,
     contents: `
     <div><h2>${SNEAKERS_NAME} DRAW가 시작 되었습니다!</h2></div>
+    <div style="font-size:20px">${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분</div>
+    <div><span style="font-size:25px">${timeDifference}</span>분간 진행될 예정입니다. </div>
+    <div><a href="${todayDrawProduct.product_url}" style="font-size:25px">THE DRAW 응모 하기</a></div>
     <img src="${todayDrawProduct.img_url}"></img>
-    <div><span style="font-size:20px">${todayDrawProduct.draw_start_time} ~ ${todayDrawProduct.draw_end_time} </div>
-    <div><span style="font-size:25px">${minutes}</span>분간 진행될 예정입니다. </div>
-    <a href="${todayDrawProduct.product_url}">응모 하기</a>`
+    `
   };
 
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
-    sendMail(message).catch(console.log("메일 보내기 실패"));
+    sendMail(message).catch(console.error);
     //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
@@ -159,14 +171,6 @@ function setAlarm(todayDrawProduct) {
       }
     });
   });
-
-  //  re logging
-  let startYear = DRAW_START_TIME.getFullYear();
-  let startMonth = DRAW_START_TIME.getMonth() + 1;
-  let startDate = DRAW_START_TIME.getDate();
-  let startHours = DRAW_START_TIME.getHours() < 10 ? `0${DRAW_START_TIME.getHours()}` : DRAW_START_TIME.getHours();
-  let startMinutes = DRAW_START_TIME.getMinutes() < 10 ? `0${DRAW_START_TIME.getMinutes()}` : DRAW_START_TIME.getMinutes();
-  console.log(`${SNEAKERS_NAME}의 Drarw 알람이 ${startYear}-${startMonth}-${startDate} / ${startHours}:${startMinutes} 에 설정되었습니다.`);
 
   //  확인하지 않았으면 중간에 한번 더 알려주는거
   let drawEndAlarm = SCHEDULE.scheduleJob(DRAW_END_TIME, () => {
@@ -237,8 +241,8 @@ let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
       // re logging?
     }
     else {
-      for (let data of todayDrawDatas) {  // re 메일 하나만 보내기
-        setAlarm(data);
+      for (let drawData of todayDrawDatas) {
+        setAlarm(drawData);
       }
     }
   });
