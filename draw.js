@@ -49,6 +49,8 @@ async function sendMail(message) {
 }
 
 function loggingNumberOfDrawProducts(numberProducts) {
+  // Log format template : `${info.timestamp} ${info.level}: ${info.message}`;
+  // Log level : error(실패 했을때), info(새로운 draw 추가, 삭제, 알림 Log)
   const logPath = './config/GetDrawInfoLog.txt';
   const date = new Date();
   const timeStamp = date.toLocaleString();
@@ -88,6 +90,7 @@ function insertNewProducts(newProducts) {
       }
       else {
         console.log("새로운 Draw 저장 완료!!");
+        // Logging
       }
     });
   }
@@ -142,7 +145,7 @@ function setAlarm(todayDrawProduct) {
   let startMinutes = DRAW_START_TIME.getMinutes() < 10 ? `0${DRAW_START_TIME.getMinutes()}` : DRAW_START_TIME.getMinutes();
   let endHours = DRAW_END_TIME.getHours() < 10 ? `0${DRAW_END_TIME.getHours()}` : DRAW_END_TIME.getHours();
   let endMinutes = DRAW_END_TIME.getMinutes() < 10 ? `0${DRAW_END_TIME.getMinutes()}` : DRAW_END_TIME.getMinutes();
-  console.log(`${SNEAKERS_NAME}의 Drarw 알람이 ${drawYear}-${drawMonth}-${drawDate} / ${startHours}:${startMinutes} 에 설정되었습니다.`); // re logging
+  console.log(`${SNEAKERS_NAME}의 Drarw 알람이 ${drawYear}-${drawMonth}-${drawDate} / ${startHours}:${startMinutes} 에 설정되었습니다.`); // Logging
 
   let timeDifference = Math.floor((DRAW_END_TIME - DRAW_START_TIME) / 60000);
   const message = {
@@ -238,7 +241,7 @@ let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
     }
     else if (todayDrawDatas.length === 0) {
       console.log(`${TODAY} THE DRAW 예정이 없습니다.`);
-      // re logging?
+      // Logging
     }
     else {
       for (let drawData of todayDrawDatas) {
