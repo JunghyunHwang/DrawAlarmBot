@@ -26,8 +26,7 @@ class NikeDraw {
         let $ = CHEERIO.load(HTML.data);
         let bodyList = $("ul.gallery li");
         let strDraw = "THE DRAW 진행예정";  //응모중에는 'THE DRAW 응모하기 / 응모 끝나면 THE DRAW 응모 마감'
-        for (let item of bodyList)
-        {
+        for (let item of bodyList) {
             let releaseType = $(item).find('div.ncss-btn-primary-dark').text();
 
             // Check release type
@@ -62,17 +61,17 @@ class NikeDraw {
             let dateRegex = /(\d{1,2})\/(\d{1,2})/g;
 
             let tempPrice = $('div.fs16-md').text();
-            let resultPrice = tempPrice.match(priceRegex);    //  100만원 하는 신발은 구별 못함
+            let resultPrice = tempPrice.match(priceRegex);    //  100만원 넘는 신발은 구별 못함
             let price = resultPrice[0] + resultPrice[1];
             let releaseInfo = $('p.draw-info').text();
         
             let drawTimeInfo = releaseInfo.match(timeRegex);
             let dateRegResult = dateRegex.exec(releaseInfo);
-            let currentDate = new Date();
-            let years = currentDate.getFullYear();  // re 다음해로 넘어가는 12월에 문제 생길 가능성 있음
-            let month = dateRegResult[1];
-            let date = dateRegResult[2];
-        
+            let month = Number(dateRegResult[1]);
+            let date = Number(dateRegResult[2]);
+            let current = new Date();
+            let currentMonth = current.getMonth() + 1;
+            let years = currentMonth === 12 && month === 1 ? current.getFullYear() + 1 : current.getFullYear();
             let drawDateInfo = `${years}-${month}-${date}`;
         
             this.newProducts[i] = {
