@@ -237,7 +237,7 @@ let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
 });
 
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 45 0 * * *', () => {
+let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
