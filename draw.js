@@ -19,6 +19,7 @@ const DB = MYSQL.createConnection({
 DB.connect((error) => {
   if (error) { // re logging
     console.log(error);
+    logging('error', "DB disconnected");
   }
 });
 
@@ -53,7 +54,7 @@ function logging(level, message) {
   const timeStamp = date.toLocaleString();
   const errLogPath = './config/log/err.txt';
   const infoLogPath = './config/log/info.txt';
-  const logMessage = `${timeStamp} '${level}': ${message}`;
+  const logMessage = `${timeStamp} '${level}': ${message}\n`;
 
   // re exception
   if (level === 'error') {
@@ -73,31 +74,31 @@ function logging(level, message) {
 }
 
 function insertNewProducts(newProducts) {
-  console.log("데이터 베이스에 저장 중...");
   const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
+
   //  re type name too long
-  for (let i = 0; i < newProducts.length; i++) {
+  for (let product of newProducts) {
     DB.query(INSERT_PRODUCT_SQL, {
-      brand_name: newProducts[i].brand_name,
-      type_name: newProducts[i].type_name,
-      sneakers_name: newProducts[i].sneakers_name,
-      full_name: newProducts[i].full_name,
-      product_price: newProducts[i].price,
-      product_url: newProducts[i].url,
-      draw_date: newProducts[i].draw_date,
-      draw_start_time: newProducts[i].draw_start_time,
-      draw_end_time: newProducts[i].draw_end_time,
-      winner_announcement_time: newProducts[i].announcement_time,
-      purchase_time: newProducts[i].purchase_time,
-      img_url: newProducts[i].img_url
+      brand_name: product.brand_name,
+      type_name: product.type_name,
+      sneakers_name: product.sneakers_name,
+      full_name: product.full_name,
+      product_price: product.price,
+      product_url: product.url,
+      draw_date: product.draw_date,
+      draw_start_time: product.draw_start_time,
+      draw_end_time: product.draw_end_time,
+      winner_announcement_time: product.announcement_time,
+      purchase_time: product.purchase_time,
+      img_url: product.img_url
     }, (err, inserResult) => {
       if (err) {
         console.log(err); // re exception
+        logging('error', 'Draw 추가 실패');
       }
       else {
         console.log("새로운 Draw 저장 완료!!");
-        // Logging
-        logging('info', 'Draw 추가');
+        logging('info', `${product.full_name} 추가`);
       }
     });
   }
@@ -160,12 +161,12 @@ function setAlarm(todayDrawProduct) {
     <img src="${todayDrawProduct.img_url}"></img>
     `
   };
-  logging('info', 'Draw 알림 설정');
+  logging('notification', 'Draw 알림 설정');
 
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
     sendMail(message).catch(console.error);
-    logging('info', 'Draw 시작 알림');
+    logging('notification', 'Draw 시작 알림');
     //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
@@ -181,7 +182,7 @@ function setAlarm(todayDrawProduct) {
 
   //  확인하지 않았으면 중간에 한번 더 알려주는거
   let drawEndAlarm = SCHEDULE.scheduleJob(DRAW_END_TIME, () => {
-    logging('info', 'Draw 종료 알림');
+    logging('notification', 'Draw 종료 알림');
   });
 }
 
@@ -244,7 +245,7 @@ let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
     }
     else if (todayDrawDatas.length === 0) {
       console.log(`${TODAY} THE DRAW 예정이 없습니다.`);
-      logging('info', `${TODAY} THE DRAW 예정이 없습니다.`);
+      logging('notification', `${TODAY} THE DRAW 예정이 없습니다.`);
     }
     else {
       for (let drawData of todayDrawDatas) {
