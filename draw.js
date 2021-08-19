@@ -161,12 +161,12 @@ function setAlarm(todayDrawProduct) {
     <img src="${todayDrawProduct.img_url}"></img>
     `
   };
-  logging('notification', 'Draw 알림 설정');
+  logging('notification', `${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
     sendMail(message).catch(console.error);
-    logging('notification', 'Draw 시작 알림');
+    logging('notification', 'THE DRAW 시작 알림');
     //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
@@ -182,7 +182,7 @@ function setAlarm(todayDrawProduct) {
 
   //  확인하지 않았으면 중간에 한번 더 알려주는거
   let drawEndAlarm = SCHEDULE.scheduleJob(DRAW_END_TIME, () => {
-    logging('notification', 'Draw 종료 알림');
+    logging('notification', 'THE DRAW 종료 알림');
   });
 }
 
@@ -234,7 +234,7 @@ let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
 });
 
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
+let checkTodayDraw = SCHEDULE.scheduleJob('0 45 0 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
