@@ -146,6 +146,9 @@ function setAlarm(todayDrawProduct) {
   const SNEAKERS_NAME = `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}`;
 
   // Formatting Draw date and time
+  let years = DRAW_START_TIME.getFullYear();
+  let month = DRAW_START_TIME.getMonth() + 1;
+  let date = DRAW_START_TIME.getDate();
   let startHours = DRAW_START_TIME.getHours() < 10 ? `0${DRAW_START_TIME.getHours()}` : DRAW_START_TIME.getHours();
   let startMinutes = DRAW_START_TIME.getMinutes() < 10 ? `0${DRAW_START_TIME.getMinutes()}` : DRAW_START_TIME.getMinutes();
   let endHours = DRAW_END_TIME.getHours() < 10 ? `0${DRAW_END_TIME.getHours()}` : DRAW_END_TIME.getHours();
@@ -161,7 +164,7 @@ function setAlarm(todayDrawProduct) {
     <img src="${todayDrawProduct.img_url}"></img>
     `
   };
-  logging('notification', `${todayDrawProduct.full_name} THE DRAW 알림 설정`);
+  logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
@@ -234,7 +237,7 @@ let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
 });
 
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 45 0 * * *', () => {
+let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
