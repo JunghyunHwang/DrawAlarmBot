@@ -25,7 +25,7 @@ class NikeDraw {
         const HTML = await this.scrapPage(this.url);
         let $ = CHEERIO.load(HTML.data);
         let bodyList = $("ul.gallery li");
-        let strDraw = "THE DRAW 진행예정";  //응모중에는 'THE DRAW 응모하기 / 응모 끝나면 THE DRAW 응모 마감'
+        let strDraw = "THE DRAW 진행예정";  // 응모중에는 'THE DRAW 응모하기' / 응모 끝나면 'THE DRAW 응모 마감'
         for (let item of bodyList) {
             let releaseType = $(item).find('div.ncss-btn-primary-dark').text();
 

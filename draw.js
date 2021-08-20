@@ -193,7 +193,7 @@ const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
 let brands = [];
 brands.push(Nike);
 
-let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 30 * * * *', async () => {
+let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 * * * * *', async () => {
   let startTime = new Date();
 
   for (let brand of brands) {
@@ -212,7 +212,9 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 30 * * * *', async () =>
       else if (drawList.length != drawData[0]['COUNT(*)']) {
         if (drawData[0]['COUNT(*)'] == 0) {
           insertNewProducts(await brand.getSneakersInfo(drawList));
-          // 만약 시간이 09:00 ~ 21:00면 바로 알림
+        }
+        else if (drawData[0]['COUNT(*)'] > drawList.length) {
+          logging('error', 'DB 삭제 안됐을 가능성있음 info log 확인');
         }
         else {
           checkDrawDatas(brand);
