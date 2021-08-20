@@ -2,12 +2,11 @@
 const dotenv = require('dotenv');
 const SCHEDULE = require('node-schedule');
 const MYSQL = require('mysql');
-const path = require('path');
 const nodemailer = require('nodemailer');
 const FS = require('fs');
 const NikeDraw = require('./brands/NikeDraw');
 
-dotenv.config({ path: './config/.env' });
+dotenv.config();
 
 const DB = MYSQL.createConnection({
   host: process.env.DATABASE_HOST,
@@ -195,7 +194,7 @@ brands.push(Nike);
 
 let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 * * * * *', async () => {
   let startTime = new Date();
-
+  
   for (let brand of brands) {
     let drawList = await brand.getDrawList();
 
