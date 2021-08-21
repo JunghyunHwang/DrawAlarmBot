@@ -168,7 +168,7 @@ function setAlarm(todayDrawProduct) {
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
     sendMail(message).catch(console.error);
-    logging('notification', 'THE DRAW 시작 알림');
+    logging('notification', `${todayDrawProduct.full_name} THE DRAW 시작 알림`);
     //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
@@ -177,14 +177,14 @@ function setAlarm(todayDrawProduct) {
         console.log(err);
       }
       else {
-        logging('info', 'Draw 삭제');
+        logging('info', `${todayDrawProduct.full_name} THE DRAW 삭제`);
       }
     });
   });
 
   //  확인하지 않았으면 중간에 한번 더 알려주는거
   let drawEndAlarm = SCHEDULE.scheduleJob(DRAW_END_TIME, () => {
-    logging('notification', 'THE DRAW 종료 알림');
+    logging('notification', `${todayDrawProduct.full_name} THE DRAW 종료 알림`);
   });
 }
 
@@ -198,8 +198,7 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 * * * * *', async () => 
   for (let brand of brands) {
     let drawList = await brand.getDrawList();
 
-    if (drawList.length == 0)
-    {
+    if (drawList.length == 0) {
       continue;
     }
 
