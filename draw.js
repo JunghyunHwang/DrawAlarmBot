@@ -2,12 +2,11 @@
 const dotenv = require('dotenv');
 const SCHEDULE = require('node-schedule');
 const MYSQL = require('mysql');
-const path = require('path');
 const nodemailer = require('nodemailer');
 const FS = require('fs');
 const NikeDraw = require('./brands/NikeDraw');
 
-dotenv.config({ path: './config/.env' });
+dotenv.config();
 
 const DB = MYSQL.createConnection({
   host: process.env.DATABASE_HOST,
@@ -169,7 +168,7 @@ function setAlarm(todayDrawProduct) {
   let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
     sendMail(message).catch(console.error);
-    logging('notification', 'THE DRAW 시작 알림');
+    logging('notification', `${todayDrawProduct.full_name} THE DRAW 시작 알림`);
     //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
     const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
 
@@ -178,14 +177,14 @@ function setAlarm(todayDrawProduct) {
         console.log(err);
       }
       else {
-        logging('info', 'Draw 삭제');
+        logging('info', `${todayDrawProduct.full_name} THE DRAW 삭제`);
       }
     });
   });
 
   //  확인하지 않았으면 중간에 한번 더 알려주는거
   let drawEndAlarm = SCHEDULE.scheduleJob(DRAW_END_TIME, () => {
-    logging('notification', 'THE DRAW 종료 알림');
+    logging('notification', `${todayDrawProduct.full_name} THE DRAW 종료 알림`);
   });
 }
 
@@ -195,12 +194,11 @@ brands.push(Nike);
 
 let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 30 * * * *', async () => {
   let startTime = new Date();
-
+  
   for (let brand of brands) {
     let drawList = await brand.getDrawList();
 
-    if (drawList.length == 0)
-    {
+    if (drawList.length == 0) {
       continue;
     }
 
@@ -212,7 +210,9 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 30 * * * *', async () =>
       else if (drawList.length != drawData[0]['COUNT(*)']) {
         if (drawData[0]['COUNT(*)'] == 0) {
           insertNewProducts(await brand.getSneakersInfo(drawList));
-          // 만약 시간이 09:00 ~ 21:00면 바로 알림
+        }
+        else if (drawData[0]['COUNT(*)'] > drawList.length) {
+          logging('error', 'DB 삭제 안됐을 가능성있음 info log 확인');
         }
         else {
           checkDrawDatas(brand);
