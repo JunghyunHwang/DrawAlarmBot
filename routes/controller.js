@@ -26,7 +26,6 @@ router.get('/nike', (req, res) => {
             console.log(err); // re logging export
         }
         else {
-            console.log(result);
             res.json({
                 draw_data: result
             });
@@ -36,13 +35,13 @@ router.get('/nike', (req, res) => {
 
 router.get('/nike/:id', (req, res) => {
     const brandName = 'Nike';
-    const getSneakersDataSql = 'SELECT id, type_name, sneakers_name, img_url FROM draw_info WHERE brand_name=? AND id=?';
-    db.query(getSneakersDataSql, [brandName, req.params.id], (err, result) => {
+    const sneakersName = req.params.id.replace(/_/g, ' ');
+    const getSneakersDataSql = 'SELECT id, type_name, sneakers_name, img_url FROM draw_info WHERE brand_name=? AND sneakers_name=?';
+    db.query(getSneakersDataSql, [brandName, sneakersName], (err, result) => {
         if (err) {
             console.log(err); // re logging export
         }
         else {
-            console.log(result);
             res.json({
                 draw_data: result
             });
