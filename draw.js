@@ -1,14 +1,14 @@
 'use strict';
 const dotenv = require('dotenv');
-const SCHEDULE = require('node-schedule');
-const MYSQL = require('mysql');
+const schedule = require('node-schedule');
+const mysql = require('mysql');
 const nodemailer = require('nodemailer');
-const FS = require('fs');
+const fs = require('fs');
 const NikeDraw = require('./brands/NikeDraw');
 
 dotenv.config();
 
-const DB = MYSQL.createConnection({
+const DB = mysql.createConnection({
   host: process.env.DATABASE_HOST,
   user: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASSWORD,
@@ -24,7 +24,7 @@ DB.connect((error) => {
 
 async function sendMail(message) {
   const receiverFilePath = './config/receiver.txt';
-  const receiver = FS.readFileSync(receiverFilePath).toString().split('\n');
+  const receiver = fs.readFileSync(receiverFilePath).toString().split('\n');
 
   let transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -57,14 +57,14 @@ function logging(level, message) {
 
   // re exception
   if (level === 'error') {
-    FS.appendFile(errLogPath, logMessage, (err) => {
+    fs.appendFile(errLogPath, logMessage, (err) => {
       if (err) {
         throw err;
       }
     });
   }
   else {
-    FS.appendFile(infoLogPath, logMessage, (err) => {
+    fs.appendFile(infoLogPath, logMessage, (err) => {
       if (err) {
         throw err;
       }
@@ -165,7 +165,7 @@ function setAlarm(todayDrawProduct) {
   };
   logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
-  let drawStartAlarm = SCHEDULE.scheduleJob(DRAW_START_TIME, () => {
+  let drawStartAlarm = schedule.scheduleJob(DRAW_START_TIME, () => {
     console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
     sendMail(message).catch(console.error);
     logging('notification', `${todayDrawProduct.full_name} THE DRAW 시작 알림`);
@@ -183,7 +183,7 @@ function setAlarm(todayDrawProduct) {
   });
 
   //  확인하지 않았으면 중간에 한번 더 알려주는거
-  let drawEndAlarm = SCHEDULE.scheduleJob(DRAW_END_TIME, () => {
+  let drawEndAlarm = schedule.scheduleJob(DRAW_END_TIME, () => {
     logging('notification', `${todayDrawProduct.full_name} THE DRAW 종료 알림`);
   });
 }
@@ -192,7 +192,7 @@ const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
 let brands = [];
 brands.push(Nike);
 
-let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 30 * * * *', async () => {
+let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () => {
   let startTime = new Date();
   
   for (let brand of brands) {
@@ -229,15 +229,8 @@ let checkNewDrawsEveryMinutes = SCHEDULE.scheduleJob('0 30 * * * *', async () =>
   }
 });
 
-let checkNewDrawsEveryday = SCHEDULE.scheduleJob('0 10 0 * * *', async () => {
-  for (let brand of brands) {
-    await brand.getDrawList();
-    checkDrawDatas(brand);
-  }
-});
-
 // re server에서 해야 하는일
-let checkTodayDraw = SCHEDULE.scheduleJob('0 15 0 * * *', () => {
+let checkTodayDraw = schedule.scheduleJob('0 15 0 * * *', () => {
   const DAY = new Date();
   const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
   const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
