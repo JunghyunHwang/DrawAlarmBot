@@ -73,8 +73,6 @@ function checkDrawDatas(brand) {
 }
 
 let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () => {
-  	let startTime = new Date();
-  
 	for (let brand of brands) {
 		let drawList = await brand.getDrawList();
 
@@ -97,13 +95,6 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () =>
 				else {
 					checkDrawDatas(brand);
 				}
-			}
-			else {
-				let endTime = new Date();
-				let resultTime = (endTime - startTime) / 1000;
-				console.log(`${resultTime}초 걸림!`);
-				console.log("Nothing changed");
-				console.log("---------------");
 			}
 		});
 	}

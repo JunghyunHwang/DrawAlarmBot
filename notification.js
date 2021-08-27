@@ -78,17 +78,16 @@ function setAlarm(todayDrawProduct) {
     });
 }
 
-let checkTodayDraw = schedule.scheduleJob('0 5 0 * * *', () => {
+let checkTodayDraw = schedule.scheduleJob('0 5 7 * * *', () => {
     const DAY = new Date();
     const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
     const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
   
     DB.query(DRAW_INFO_SQL, [TODAY], (err, todayDrawDatas) => {
         if (err) {
-            console.log(err);
+            logging('error', 'checkTodayDraw query error!');
         }
         else if (todayDrawDatas.length === 0) {
-            console.log(`${TODAY} THE DRAW 예정이 없습니다.`);
             logging('notification', `${TODAY} THE DRAW 예정이 없습니다.`);
         }
         else {
