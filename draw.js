@@ -49,9 +49,9 @@ function checkDrawDatas(brand) {
 		else {
 			for (let sneakers of brand.drawList) {
 				let isNewDraw = true;
-
+				
 				for (let data of drawDatas) {
-					if (data.full_name == sneakers.full_name) {
+					if (data.full_name === sneakers.full_name) {
 						isNewDraw = false;
 						break;
 					}

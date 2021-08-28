@@ -26,6 +26,7 @@ class NikeDraw {
         let $ = CHEERIO.load(HTML.data);
         let bodyList = $("ul.gallery li");
         let strDraw = "THE DRAW 진행예정";  // 응모중에는 'THE DRAW 응모하기' / 응모 끝나면 'THE DRAW 응모 마감'
+        
         for (let item of bodyList) {
             let releaseType = $(item).find('div.ncss-btn-primary-dark').text();
 
@@ -50,8 +51,8 @@ class NikeDraw {
     async getSneakersInfo(newDrawList) {
         console.log("가져오는 중...");
 
-        for (let i = 0; i < newDrawList.length; i++) {
-            let sneakers = await this.scrapPage(newDrawList[i].url);
+        for (let product of newDrawList) {
+            let sneakers = await this.scrapPage(product.url);
             let $ = CHEERIO.load(sneakers.data);
             let imgInfo = $("div.prd-img-wrap");
 
@@ -73,21 +74,23 @@ class NikeDraw {
             let currentMonth = current.getMonth() + 1;
             let years = currentMonth === 12 && month === 1 ? current.getFullYear() + 1 : current.getFullYear();
             let drawDateInfo = `${years}-${month}-${date}`;
-        
-            this.newProducts[i] = {
-                brand_name: newDrawList[i].brand_name,
-                type_name: newDrawList[i].type_name,
-                sneakers_name: newDrawList[i].sneakers_name,
-                full_name: newDrawList[i].full_name,
+
+            let productInfo = {
+                brand_name: product.brand_name,
+                type_name: product.type_name,
+                sneakers_name: product.sneakers_name,
+                full_name: product.full_name,
                 price: price,
                 draw_date: drawDateInfo,
                 draw_start_time: `${drawDateInfo} ${drawTimeInfo[0]}`,
                 draw_end_time: `${drawDateInfo} ${drawTimeInfo[1]}`,
                 announcement_time: `${drawDateInfo} ${drawTimeInfo[2]}`,
                 purchase_time: `${drawDateInfo} ${drawTimeInfo[3]}`,
-                url: newDrawList[i].url,
+                url: product.url,
                 img_url: $(imgInfo).find('img.image-component').attr('src')
             };
+            
+            this.newProducts.push(productInfo);
         }
 
         return this.newProducts;
