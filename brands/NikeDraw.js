@@ -49,8 +49,6 @@ class NikeDraw {
     }
 
     async getSneakersInfo(newDrawList) {
-        console.log("가져오는 중...");
-
         for (let product of newDrawList) {
             let sneakers = await this.scrapPage(product.url);
             let $ = CHEERIO.load(sneakers.data);

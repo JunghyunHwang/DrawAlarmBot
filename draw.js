@@ -31,7 +31,6 @@ function insertNewProducts(newProducts) {
 				logging('error', 'Draw 추가 실패');
 			}
 			else {
-				console.log("새로운 Draw 저장 완료!!");
 				logging('info', `${product.full_name} 추가`);
 			}
 		});
@@ -64,9 +63,6 @@ function checkDrawDatas(brand) {
 
 			if (newDrawList.length > 0) {
 				insertNewProducts(await brand.getSneakersInfo(newDrawList));
-			}
-			else {
-				console.log("저장 할게 없어");
 			}
 		}
 	});
