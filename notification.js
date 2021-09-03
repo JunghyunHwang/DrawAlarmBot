@@ -6,7 +6,7 @@ const querystring = require('querystring');
 const fs = require('fs');
 const logging = require('./log.js');
 
-async function test() {
+async function testSendKakaoMessage() {
     const drawStartMessage = {
         object_type: "feed", 
         content: {
@@ -41,7 +41,7 @@ async function test() {
     });
 }
 
-test();
+testSendKakaoMessage();
 
 async function sendMail(message) {
     const receiverFilePath = './config/receiver.txt';
