@@ -7,57 +7,38 @@ const fs = require('fs');
 const logging = require('./log.js');
 
 async function test() {
-    const template_objectObj = {
+    const drawStartMessage = {
         object_type: "feed", 
         content: {
-            title: "Travisscott", 
-            image_url: "https://t1.daumcdn.net/cfile/tistory/2425A9455747DAB308", 
+            title: "LD와플 x sacai x CLOT Orange Blaze 발매가 시작 되었습니다.", 
+            image_url: "https://static-breeze.nike.co.kr/kr/launch/cmsstatic/product/DH1347-100/85b4b734-55aa-437a-9bc1-f9d049bfae0c_primary.jpg", 
+            description: 'https://www.nike.com/kr/launch/t/men/fw/nike-sportswear/DH1347-100/lvbh14/nike-ldwaffle-s-c',
             link: {
                 web_url: "https://www.nike.com/kr/launch"
             }
-        },
-        buttons: [
-            {
-                title: '응모 하기',
-                link: {
-                    web_url: 'https://www.nike.com/kr/launch'
-                }
-            }
-        ]
+        }
     };
-    const template_objectStr = JSON.stringify(template_objectObj);
-
-    const templateText = {
-        object_type: "text", 
-        text: "발매가 시작 되었습니다.",
-        link: {
-            web_url: "https://naver.com",
-            mobile_web_url: "https://naver.com"
-        },
-        button_title: "응모하기"
-    };
-    const templateTextStr = JSON.stringify(templateText);
 
     const options = {
         url:'https://kapi.kakao.com/v2/api/talk/memo/default/send',
         method: 'POST',
         headers: {
-            'Authorization': 'Bearer GWMAE6MkcFysSccZK_dmKa26yNL9F7551bJFFgopyV8AAAF7nIjf-A',
+            'Authorization': 'Bearer fN46qTqoOJjYoldRX1oSg1AA2g1PpjeFkCgFAAopcBQAAAF7rKJD1Q',
             'Content-Type': 'application/x-www-form-urlencoded'
         },
         form: {
-            template_object: templateTextStr
+            template_object: JSON.stringify(drawStartMessage)
         }
     };
 
-    request(options, callback);
-}
-
-function callback(error, response, body) {
-    console.log(response.statusCode);
-    if(!error && response.statusCode === 200) {
+    request(options, (error, response, body) => {
+        if (error) {
+            console.log(error);
+            return
+        }
+        console.log(response.statusCode);
         console.log(body);
-    }
+    });
 }
 
 test();
