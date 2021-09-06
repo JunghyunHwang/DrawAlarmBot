@@ -5,8 +5,45 @@ const request = require('request');
 const querystring = require('querystring');
 const fs = require('fs');
 const logging = require('./log.js');
+const fetch = require('node-fetch');
 
-async function testSendKakaoMessage() {
+async function testLoginKakao(token) {
+    const options = {
+        url:'https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=02dddf0ef129563c8e10a29f718f2f48&redirect_uri=http://localhost:3000/oauth',
+        method: 'GET'
+    };
+
+    request(options, (error, response, body) => {
+        if (error) {
+            console.log(error);
+            return
+        }
+        console.log(response);
+    });
+
+    // const tokenOptions = {
+    //     url: 'https://kauth.kakao.com/oauth/token',
+    //     method: 'POST',
+    //     form: {
+    //         grant_type : "authorization_code",
+    //         client_id : "02dddf0ef129563c8e10a29f718f2f48",
+    //         redirect_url : "https://localhost.com/oauth",
+    //         code : "WfoRJ9M4SQO5QlsdxaATn10iC6MoqIcP4dOKdpTj2wDAk37xBpILQ9_4P7Gbv3v1lXBAkQo9dZoAAAF7tohm9A"
+    //     }
+    // };
+
+    // request(tokenOptions, (error, response, body) => {
+    //     if (error) {
+    //         console.log(error);
+    //         return
+    //     }
+    //     console.log(body);
+    //     // console.log(response);
+    //     // testSendKakaoMessage()
+    // });
+}
+
+function testSendKakaoMessage(token) {
     const drawStartMessage = {
         object_type: "feed", 
         content: {
@@ -23,7 +60,7 @@ async function testSendKakaoMessage() {
         url:'https://kapi.kakao.com/v2/api/talk/memo/default/send',
         method: 'POST',
         headers: {
-            'Authorization': 'Bearer fN46qTqoOJjYoldRX1oSg1AA2g1PpjeFkCgFAAopcBQAAAF7rKJD1Q',
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/x-www-form-urlencoded'
         },
         form: {
@@ -41,7 +78,14 @@ async function testSendKakaoMessage() {
     });
 }
 
-testSendKakaoMessage();
+async function test() {
+    const api = 'https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=02dddf0ef129563c8e10a29f718f2f48&redirect_uri=http://localhost:3000/oauth';
+
+    const testToken = await fetch(api);
+    console.log(testToken.body);
+}
+
+test()
 
 async function sendMail(message) {
     const receiverFilePath = './config/receiver.txt';
@@ -137,3 +181,5 @@ let checkTodayDraw = schedule.scheduleJob('0 5 0 * * *', () => {
         }
     });
 });
+
+module.exports = testLoginKakao;

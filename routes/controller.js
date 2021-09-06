@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
 const mysql = require('mysql');
+const kakaoLogin = require('../notification.js');
 dotenv.config();
 
 const db = mysql.createConnection({
@@ -46,6 +47,14 @@ router.get('/nike/:id', (req, res) => {
                 draw_data: result
             });
         }
+    });
+});
+
+router.get('/oauth', (req, res) => {
+    const token = req.query.code;
+    console.log(token);
+    res.json({
+        value: token
     });
 });
 
