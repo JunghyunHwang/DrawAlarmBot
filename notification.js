@@ -6,41 +6,30 @@ const querystring = require('querystring');
 const fs = require('fs');
 const logging = require('./log.js');
 const fetch = require('node-fetch');
+let tokenValue = "";
 
-async function testLoginKakao(token) {
-    const options = {
-        url:'https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=02dddf0ef129563c8e10a29f718f2f48&redirect_uri=http://localhost:3000/oauth',
-        method: 'GET'
+async function testLoginKakao() {
+    const autoLogin = 'https://kauth.kakao.com/oauth/authorize?client_id=02dddf0ef129563c8e10a29f718f2f48&redirect_uri=http://localhost:3000/oauth&response_type=code&prompt=none';
+    const getTokenOptions = {
+        url: 'https://kauth.kakao.com/oauth/token',
+        method: 'POST',
+        form: {
+            grant_type : "authorization_code",
+            client_id : "02dddf0ef129563c8e10a29f718f2f48",
+            redirect_url : "https://localhost.com/oauth",
+            code : process.env.INGA_TOKEN // .env
+        }
     };
 
-    request(options, (error, response, body) => {
+    request(getTokenOptions, (error, response, body) => {
         if (error) {
             console.log(error);
             return
         }
-        console.log(response);
+        let testBody = JSON.parse(body);
+        tokenValue = testBody.access_token;
+        testSendKakaoMessage(testBody.access_token)
     });
-
-    // const tokenOptions = {
-    //     url: 'https://kauth.kakao.com/oauth/token',
-    //     method: 'POST',
-    //     form: {
-    //         grant_type : "authorization_code",
-    //         client_id : "02dddf0ef129563c8e10a29f718f2f48",
-    //         redirect_url : "https://localhost.com/oauth",
-    //         code : "WfoRJ9M4SQO5QlsdxaATn10iC6MoqIcP4dOKdpTj2wDAk37xBpILQ9_4P7Gbv3v1lXBAkQo9dZoAAAF7tohm9A"
-    //     }
-    // };
-
-    // request(tokenOptions, (error, response, body) => {
-    //     if (error) {
-    //         console.log(error);
-    //         return
-    //     }
-    //     console.log(body);
-    //     // console.log(response);
-    //     // testSendKakaoMessage()
-    // });
 }
 
 function testSendKakaoMessage(token) {
@@ -78,14 +67,9 @@ function testSendKakaoMessage(token) {
     });
 }
 
-async function test() {
-    const api = 'https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=02dddf0ef129563c8e10a29f718f2f48&redirect_uri=http://localhost:3000/oauth';
-
-    const testToken = await fetch(api);
-    console.log(testToken.body);
-}
-
-test()
+let sendKakaoMessageMinute = schedule.scheduleJob('0 * * * * *', () => {
+    tokenValue === "" ? testLoginKakao() : testSendKakaoMessage(tokenValue);
+});
 
 async function sendMail(message) {
     const receiverFilePath = './config/receiver.txt';
