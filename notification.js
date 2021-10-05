@@ -67,9 +67,9 @@ function testSendKakaoMessage(token) {
     });
 }
 
-let sendKakaoMessageMinute = schedule.scheduleJob('0 * * * * *', () => {
-    tokenValue === "" ? testLoginKakao() : testSendKakaoMessage(tokenValue);
-});
+// let sendKakaoMessageMinute = schedule.scheduleJob('0 * * * * *', () => {
+//     tokenValue === "" ? testLoginKakao() : testSendKakaoMessage(tokenValue);
+// });
 
 async function sendMail(message) {
     const receiverFilePath = './config/receiver.txt';
@@ -96,7 +96,7 @@ async function sendMail(message) {
     }
 }
 
-function setAlarm(todayDrawProduct) {
+function setDrawAlarm(todayDrawProduct) {
     const DRAW_START_TIME = new Date(todayDrawProduct.draw_start_time);
     const DRAW_END_TIME = new Date(todayDrawProduct.draw_end_time);
     const SNEAKERS_NAME = `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}`;
@@ -110,7 +110,7 @@ function setAlarm(todayDrawProduct) {
     let endHours = DRAW_END_TIME.getHours() < 10 ? `0${DRAW_END_TIME.getHours()}` : DRAW_END_TIME.getHours();
     let endMinutes = DRAW_END_TIME.getMinutes() < 10 ? `0${DRAW_END_TIME.getMinutes()}` : DRAW_END_TIME.getMinutes();
     let timeDifference = Math.floor((DRAW_END_TIME - DRAW_START_TIME) / 60000);
-    const message = {
+    const drawStartMessage = {
         title: `${SNEAKERS_NAME} DRAW가 시작 되었습니다!`,
         contents: `
         <div><h2>${SNEAKERS_NAME} DRAW가 시작 되었습니다!</h2></div>
@@ -121,10 +121,10 @@ function setAlarm(todayDrawProduct) {
         `
     };
     logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
-  
+
     let drawStartAlarm = schedule.scheduleJob(DRAW_START_TIME, () => {
         console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
-        sendMail(message).catch(console.error);
+        sendMail(drawStartMessage).catch(console.error);
         logging('notification', `${todayDrawProduct.full_name} THE DRAW 시작 알림`);
         //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
         const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
@@ -145,7 +145,31 @@ function setAlarm(todayDrawProduct) {
     });
 }
 
-let checkTodayDraw = schedule.scheduleJob('0 5 0 * * *', () => {
+
+let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
+    const DAY = new Date();
+    const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate() + 2}`;
+    const DRAW_INFO_SQL = "SELECT brand_name, full_name FROM draw_info WHERE draw_date=?";
+
+    DB.query(DRAW_INFO_SQL, [TODAY], (err, tomorrowDrawDatas) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            let tomorrowDrawCount = tomorrowDrawDatas.length;
+
+            const tomorrowDrawMessage = { // brandname, 확인하기 url 변수 사용 필요
+                title: `내일 Nike에서 ${tomorrowDrawCount}개의 DRAW가 예정 되어있습니다!`,
+                contents: `
+                <div><a href="https://www.nike.com/kr/launch/?type=upcoming" style="font-size:25px">홈페이지에서 확인</a></div>
+                `
+            };
+            sendMail(tomorrowDrawMessage).catch(console.error);
+        }
+    });
+});
+
+let notificationTodayDraw = schedule.scheduleJob('0 5 0 * * *', () => {
     const DAY = new Date();
     const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
     const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
@@ -160,7 +184,7 @@ let checkTodayDraw = schedule.scheduleJob('0 5 0 * * *', () => {
         }
         else {
             for (let drawData of todayDrawDatas) {
-                setAlarm(drawData);
+                setDrawAlarm(drawData);
             }
         }
     });
