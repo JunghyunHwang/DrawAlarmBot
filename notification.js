@@ -1,75 +1,9 @@
+'use strict';
 const DB = require('./config/db.js');
 const schedule = require('node-schedule');
 const nodemailer = require('nodemailer');
-const request = require('request');
-const querystring = require('querystring');
 const fs = require('fs');
 const logging = require('./log.js');
-const fetch = require('node-fetch');
-let tokenValue = "";
-
-async function testLoginKakao() {
-    const autoLogin = 'https://kauth.kakao.com/oauth/authorize?client_id=02dddf0ef129563c8e10a29f718f2f48&redirect_uri=http://localhost:3000/oauth&response_type=code&prompt=none';
-    const getTokenOptions = {
-        url: 'https://kauth.kakao.com/oauth/token',
-        method: 'POST',
-        form: {
-            grant_type : "authorization_code",
-            client_id : "02dddf0ef129563c8e10a29f718f2f48",
-            redirect_url : "https://localhost.com/oauth",
-            code : process.env.INGA_TOKEN // .env
-        }
-    };
-
-    request(getTokenOptions, (error, response, body) => {
-        if (error) {
-            console.log(error);
-            return
-        }
-        let testBody = JSON.parse(body);
-        tokenValue = testBody.access_token;
-        testSendKakaoMessage(testBody.access_token)
-    });
-}
-
-function testSendKakaoMessage(token) {
-    const drawStartMessage = {
-        object_type: "feed", 
-        content: {
-            title: "LD와플 x sacai x CLOT Orange Blaze 발매가 시작 되었습니다.", 
-            image_url: "https://static-breeze.nike.co.kr/kr/launch/cmsstatic/product/DH1347-100/85b4b734-55aa-437a-9bc1-f9d049bfae0c_primary.jpg", 
-            description: 'https://www.nike.com/kr/launch/t/men/fw/nike-sportswear/DH1347-100/lvbh14/nike-ldwaffle-s-c',
-            link: {
-                web_url: "https://www.nike.com/kr/launch"
-            }
-        }
-    };
-
-    const options = {
-        url:'https://kapi.kakao.com/v2/api/talk/memo/default/send',
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        form: {
-            template_object: JSON.stringify(drawStartMessage)
-        }
-    };
-
-    request(options, (error, response, body) => {
-        if (error) {
-            console.log(error);
-            return
-        }
-        console.log(response.statusCode);
-        console.log(body);
-    });
-}
-
-// let sendKakaoMessageMinute = schedule.scheduleJob('0 * * * * *', () => {
-//     tokenValue === "" ? testLoginKakao() : testSendKakaoMessage(tokenValue);
-// });
 
 async function sendMail(message) {
     const receiverFilePath = './config/receiver.txt';
@@ -148,12 +82,16 @@ function setDrawAlarm(todayDrawProduct) {
 
 let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     const DAY = new Date();
-    const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate() + 2}`;
+    const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate() + 1}`;
     const DRAW_INFO_SQL = "SELECT brand_name, full_name FROM draw_info WHERE draw_date=?";
 
     DB.query(DRAW_INFO_SQL, [TODAY], (err, tomorrowDrawDatas) => {
         if (err) {
             console.log(err);
+        }
+        else if (tomorrowDrawDatas.length === 0)
+        {
+            console.log("내일 없음"); // re 고쳐야함
         }
         else {
             let tomorrowDrawCount = tomorrowDrawDatas.length;
@@ -161,7 +99,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
             const tomorrowDrawMessage = { // brandname, 확인하기 url 변수 사용 필요
                 title: `내일 Nike에서 ${tomorrowDrawCount}개의 DRAW가 예정 되어있습니다!`,
                 contents: `
-                <div><a href="https://www.nike.com/kr/launch/?type=upcoming" style="font-size:25px">홈페이지에서 확인</a></div>
+                <div><a href="https://www.nike.com/kr/launch/?type=upcoming" style="font-size:25px; color:black;">홈페이지에서 확인</a></div>
                 `
             };
             sendMail(tomorrowDrawMessage).catch(console.error);
@@ -189,5 +127,3 @@ let notificationTodayDraw = schedule.scheduleJob('0 5 0 * * *', () => {
         }
     });
 });
-
-module.exports = testLoginKakao;
