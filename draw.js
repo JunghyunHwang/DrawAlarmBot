@@ -72,7 +72,7 @@ function checkDrawDatas(brand) {
 	});
 }
 
-let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 * * * * *', async () => {
+let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () => {
   	let startTime = new Date();
   
 	for (let brand of brands) {
