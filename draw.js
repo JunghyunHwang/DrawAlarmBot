@@ -26,12 +26,10 @@ function insertNewProducts(newProducts) {
 			purchase_time: product.purchase_time,
 			img_url: product.img_url
 		}, (err, inserResult) => {
-			if (err) {
-				console.log(err); // re exception
+			if (err) { // re exception
 				logging('error', 'Draw 추가 실패');
 			}
 			else {
-				console.log("새로운 Draw 저장 완료!!");
 				logging('info', `${product.full_name} 추가`);
 			}
 		});
@@ -44,7 +42,7 @@ function checkDrawDatas(brand) {
 
 	DB.query(DRAW_INFO_SQL, [brand.name], async (err, drawDatas) => {
 		if (err) {
-			console.log(err);
+			logging('error', 'Check saved draw data DB 접속 실패');
 		}
 		else {
 			for (let sneakers of brand.drawList) {
@@ -65,16 +63,11 @@ function checkDrawDatas(brand) {
 			if (newDrawList.length > 0) {
 				insertNewProducts(await brand.getSneakersInfo(newDrawList));
 			}
-			else {
-				console.log("저장 할게 없어");
-			}
 		}
 	});
 }
 
 let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () => {
-  	let startTime = new Date();
-  
 	for (let brand of brands) {
 		let drawList = await brand.getDrawList();
 
@@ -85,7 +78,7 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () =>
     	const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
 		DB.query(NUMBER_OF_DRAW_DATA_SQL, [brand.name], async (err, drawData) => {
 			if (err) {
-				console.log(err);
+				logging('error', 'Check new draw DB 접속 실패');
 			}
 			else if (drawList.length != drawData[0]['COUNT(*)']) {
 				if (drawData[0]['COUNT(*)'] == 0) {
@@ -97,13 +90,6 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () =>
 				else {
 					checkDrawDatas(brand);
 				}
-			}
-			else {
-				let endTime = new Date();
-				let resultTime = (endTime - startTime) / 1000;
-				console.log(`${resultTime}초 걸림!`);
-				console.log("Nothing changed");
-				console.log("---------------");
 			}
 		});
 	}

@@ -16,7 +16,6 @@ const db = mysql.createConnection({
 
 db.connect((error) => {
     if (error) {
-        console.log(error);
         logging('error', "DB disconnected");
     }
 });

@@ -57,7 +57,6 @@ function setDrawAlarm(todayDrawProduct) {
     logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
     let drawStartAlarm = schedule.scheduleJob(DRAW_START_TIME, () => {
-        console.log(`${SNEAKERS_NAME} THE DRAW 가 시작되었습니다!`);
         sendMail(drawStartMessage).catch(console.error);
         logging('notification', `${todayDrawProduct.full_name} THE DRAW 시작 알림`);
         //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
@@ -65,7 +64,7 @@ function setDrawAlarm(todayDrawProduct) {
   
         DB.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
             if (err) {
-                console.log(err);
+                logging('error', 'Fail DB query Remove data');
             }
             else {
                 logging('info', `${todayDrawProduct.full_name} THE DRAW 삭제`);
@@ -87,7 +86,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
 
     DB.query(DRAW_INFO_SQL, [TODAY], (err, tomorrowDrawDatas) => {
         if (err) {
-            console.log(err);
+            logging('error', 'Fail DB query tomorrow draw');
         }
         else if (tomorrowDrawDatas.length === 0)
         {
@@ -114,10 +113,9 @@ let notificationTodayDraw = schedule.scheduleJob('0 5 7 * * *', () => {
   
     DB.query(DRAW_INFO_SQL, [TODAY], (err, todayDrawDatas) => {
         if (err) {
-            console.log(err);
+            logging('error', 'Fail DB query set alarm');
         }
         else if (todayDrawDatas.length === 0) {
-            console.log(`${TODAY} THE DRAW 예정이 없습니다.`);
             logging('notification', `${TODAY} THE DRAW 예정이 없습니다.`);
         }
         else {
