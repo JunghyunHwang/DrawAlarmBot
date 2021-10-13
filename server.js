@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
+const logging = require('./log.js');
 
 const app = express();
 
