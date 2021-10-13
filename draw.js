@@ -26,8 +26,7 @@ function insertNewProducts(newProducts) {
 			purchase_time: product.purchase_time,
 			img_url: product.img_url
 		}, (err, inserResult) => {
-			if (err) {
-				console.log(err); // re exception
+			if (err) { // re exception
 				logging('error', 'Draw 추가 실패');
 			}
 			else {
@@ -43,7 +42,7 @@ function checkDrawDatas(brand) {
 
 	DB.query(DRAW_INFO_SQL, [brand.name], async (err, drawDatas) => {
 		if (err) {
-			console.log(err);
+			logging('error', 'Check saved draw data DB 접속 실패');
 		}
 		else {
 			for (let sneakers of brand.drawList) {
@@ -79,7 +78,7 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () =>
     	const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
 		DB.query(NUMBER_OF_DRAW_DATA_SQL, [brand.name], async (err, drawData) => {
 			if (err) {
-				console.log(err);
+				logging('error', 'Check new draw DB 접속 실패');
 			}
 			else if (drawList.length != drawData[0]['COUNT(*)']) {
 				if (drawData[0]['COUNT(*)'] == 0) {
