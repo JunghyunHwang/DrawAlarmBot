@@ -87,11 +87,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
         if (err) {
             logging('error', 'Fail DB query tomorrow draw');
         }
-        else if (tomorrowDrawDatas.length === 0)
-        {
-            console.log("내일 없음"); // re 고쳐야함
-        }
-        else {
+        else if (tomorrowDrawDatas.length > 0) {
             let tomorrowDrawCount = tomorrowDrawDatas.length;
 
             const tomorrowDrawMessage = { // brandname, 확인하기 url 변수 사용 필요
