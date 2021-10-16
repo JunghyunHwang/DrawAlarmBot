@@ -101,7 +101,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     });
 });
 
-let notificationTodayDraw = schedule.scheduleJob('0 5 7 * * *', () => {
+let notificationTodayDraw = schedule.scheduleJob('0 0 7 * * *', () => {
     const DAY = new Date();
     const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
     const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
