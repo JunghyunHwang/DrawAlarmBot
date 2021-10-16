@@ -1,6 +1,6 @@
 'use strict';
 const schedule = require('node-schedule');
-const DB = require('./config/db.js');
+const db = require('./db.js');
 const NikeDraw = require('./brands/NikeDraw');
 const logging = require('./log');
 
@@ -12,7 +12,7 @@ function insertNewProducts(newProducts) {
 	const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
 
 	for (let product of newProducts) {
-		DB.query(INSERT_PRODUCT_SQL, {
+		db.query(INSERT_PRODUCT_SQL, {
 			brand_name: product.brand_name,
 			type_name: product.type_name,
 			sneakers_name: product.sneakers_name,
@@ -40,7 +40,7 @@ function checkDrawDatas(brand) {
 	let newDrawList = [];
 	const DRAW_INFO_SQL = "SELECT full_name FROM draw_info WHERE brand_name=?";
 
-	DB.query(DRAW_INFO_SQL, [brand.name], async (err, drawDatas) => {
+	db.query(DRAW_INFO_SQL, [brand.name], async (err, drawDatas) => {
 		if (err) {
 			logging('error', 'Check saved draw data DB 접속 실패');
 		}
@@ -76,7 +76,7 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () =>
 		}
 
     	const NUMBER_OF_DRAW_DATA_SQL = "SELECT COUNT(*) FROM draw_info WHERE brand_name=?";
-		DB.query(NUMBER_OF_DRAW_DATA_SQL, [brand.name], async (err, drawData) => {
+		db.query(NUMBER_OF_DRAW_DATA_SQL, [brand.name], async (err, drawData) => {
 			if (err) {
 				logging('error', 'Check new draw DB 접속 실패');
 			}

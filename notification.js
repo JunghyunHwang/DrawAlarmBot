@@ -1,5 +1,5 @@
 'use strict';
-const DB = require('./config/db.js');
+const db = require('./db.js');
 const schedule = require('node-schedule');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
@@ -62,7 +62,7 @@ function setDrawAlarm(todayDrawProduct) {
         //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
         const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
   
-        DB.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
+        db.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
             if (err) {
                 logging('error', 'Fail DB query Remove data');
             }
@@ -83,7 +83,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate() + 1}`;
     const DRAW_INFO_SQL = "SELECT brand_name, full_name FROM draw_info WHERE draw_date=?";
 
-    DB.query(DRAW_INFO_SQL, [TODAY], (err, tomorrowDrawDatas) => {
+    db.query(DRAW_INFO_SQL, [TODAY], (err, tomorrowDrawDatas) => {
         if (err) {
             logging('error', 'Fail DB query tomorrow draw');
         }
@@ -106,7 +106,7 @@ let notificationTodayDraw = schedule.scheduleJob('0 5 7 * * *', () => {
     const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
     const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
   
-    DB.query(DRAW_INFO_SQL, [TODAY], (err, todayDrawDatas) => {
+    db.query(DRAW_INFO_SQL, [TODAY], (err, todayDrawDatas) => {
         if (err) {
             logging('error', 'Fail DB query set alarm');
         }
