@@ -18,6 +18,10 @@ db.connect((error) => {
     }
 });
 
+router.get('/', (req, res) => {
+    res.send("Welcome to Draw_alarm");
+});
+
 router.get('/nike', (req, res) => {
     const brandName = 'Nike';
     const getDrawDataSql = 'SELECT id, type_name, sneakers_name, img_url FROM draw_info WHERE brand_name=?';
