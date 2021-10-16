@@ -1,9 +1,8 @@
 const express = require('express');
 const mysql = require('mysql');
-const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 const logging = require('./log.js');
-
+const port = process.env.PORT || 3000;
 const app = express();
 
 dotenv.config();
@@ -23,6 +22,6 @@ db.connect((error) => {
 
 app.use('/', require('./routes/controller'));
 
-app.listen(3000, () => {
+app.listen(port, () => {
     console.log('Server is running like a Ninja');
 });
