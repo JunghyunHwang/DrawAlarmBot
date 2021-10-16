@@ -17,6 +17,7 @@ const db = mysql.createConnection({
 db.connect((error) => {
     if (error) {
         logging('error', "DB disconnected");
+        console.log("Fuck Crash");
     }
 });
 
