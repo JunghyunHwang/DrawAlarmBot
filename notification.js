@@ -1,5 +1,5 @@
 'use strict';
-const db = require('./db.js');
+const db = require('./config/db.js');
 const schedule = require('node-schedule');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
