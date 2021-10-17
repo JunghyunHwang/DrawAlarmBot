@@ -1,6 +1,6 @@
 'use strict';
 const schedule = require('node-schedule');
-const db = require('./db.js');
+const db = require('./config/db.js');
 const NikeDraw = require('./brands/NikeDraw');
 const logging = require('./log');
 

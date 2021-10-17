@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
 const mysql = require('mysql');
-const kakaoLogin = require('../notification.js');
 dotenv.config();
 
 const db = mysql.createConnection({

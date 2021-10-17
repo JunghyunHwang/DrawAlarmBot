@@ -1,7 +1,5 @@
 const express = require('express');
-const mysql = require('mysql');
 const dotenv = require('dotenv');
-const logging = require('./log.js');
 const port = process.env.PORT || 3000;
 const app = express();
 
