@@ -87,6 +87,9 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
         if (err) {
             logging('error', 'Fail DB query tomorrow draw');
         }
+        else if (tomorrowDrawDatas.length === 0) {
+            logging('info', 'There is no draw tomorrow');
+        }
         else if (tomorrowDrawDatas.length > 0) {
             let tomorrowDrawCount = tomorrowDrawDatas.length;
 
