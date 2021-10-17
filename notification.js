@@ -57,7 +57,7 @@ function setDrawAlarm(todayDrawProduct) {
     logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
     let drawStartAlarm = schedule.scheduleJob(DRAW_START_TIME, () => {
-        sendMail(drawStartMessage).catch(console.error);
+        sendMail(drawStartMessage);
         logging('notification', `${todayDrawProduct.full_name} THE DRAW 시작 알림`);
         //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
         const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
@@ -96,7 +96,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
                 <div><a href="https://www.nike.com/kr/launch/?type=upcoming" style="font-size:25px; color:black;">홈페이지에서 확인</a></div>
                 `
             };
-            sendMail(tomorrowDrawMessage).catch(console.error);
+            sendMail(tomorrowDrawMessage);
         }
     });
 });

@@ -1,21 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const dotenv = require('dotenv');
-const mysql = require('mysql');
-dotenv.config();
-
-const db = mysql.createConnection({
-    host: process.env.DATABASE_HOST,
-    user: process.env.DATABASE_USER,
-    password: process.env.DATABASE_PASSWORD,
-    database: process.env.DATABASE
-});
-
-db.connect((error) => {
-    if (error) { // re logging
-        console.log(error);
-    }
-});
+const db = require('../config/db.js');
 
 router.get('/', (req, res) => {
     res.send("Welcome to Draw_alarm");
@@ -37,9 +22,9 @@ router.get('/nike', (req, res) => {
     });
 });
 
-router.get('/nike/:id', (req, res) => {
+router.get('/nike/:name', (req, res) => {
     const brandName = 'Nike';
-    const sneakersName = req.params.id.replace(/_/g, ' ');
+    const sneakersName = req.params.name.replace(/_/g, ' ');
     const getSneakersDataSql = 'SELECT id, type_name, sneakers_name, img_url FROM draw_info WHERE brand_name=? AND sneakers_name=?';
     db.query(getSneakersDataSql, [brandName, sneakersName], (err, result) => {
         if (err) {
@@ -50,14 +35,6 @@ router.get('/nike/:id', (req, res) => {
                 draw_data: result
             });
         }
-    });
-});
-
-router.get('/oauth', (req, res) => {
-    const token = req.query.code;
-    console.log(token);
-    res.json({
-        value: token
     });
 });
 
