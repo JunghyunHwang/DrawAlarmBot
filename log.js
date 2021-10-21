@@ -3,25 +3,29 @@ const fs = require('fs');
 function logging(level, message) {
     const date = new Date();
     const timeStamp = date.toLocaleString();
-    const errLogPath = './config/log/err.txt';
-    const infoLogPath = './config/log/info.txt';
     const logMessage = `${timeStamp} '${level}': ${message}\n`;
+    let logPath = "";
   
     // re exception
-    if (level === 'error') {
-        fs.appendFile(errLogPath, logMessage, (err) => {
-            if (err) {
-                throw err;
-            }
-        });
+    switch (level) {
+        case 'error':
+            logPath = "./config/log/err.txt";
+            break;
+        case 'info':
+            logPath = "./config/log/info.txt";
+            break;
+        case 'api':
+            logPath = "./config/log/apiLog.txt";
+            break;
+        default:
+            break;
     }
-    else {
-        fs.appendFile(infoLogPath, logMessage, (err) => {
-            if (err) {
-                throw err;
-            }
-        });
-    }
+
+    fs.appendFile(logPath, logMessage, (err) => {
+        if (err) {
+            throw err;
+        }
+    });
 }
 
 module.exports = logging;
