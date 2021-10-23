@@ -42,7 +42,7 @@ router.get('/nike/:name', (req, res) => {
 router.get('/nike/api/:date', (req, res) => {
     const brandName = 'Nike';
     const date = req.params.date;
-    const getColumn = 'full_name, product_price, product_url, draw_date, draw_start_time, draw_end_time, img_url';
+    const getColumn = 'brand_name, full_name, product_price, product_url, draw_date, draw_start_time, draw_end_time, img_url';
     const getSneakersDataSql = `SELECT ${getColumn} FROM draw_info WHERE brand_name=? AND draw_date=?`;
     const clientIp = req.ip;
 
