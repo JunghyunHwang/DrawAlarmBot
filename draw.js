@@ -21,7 +21,7 @@ async function sendErrorMail(message) {
         }
     });
 
-    let info = await transporter.sendErrorMail({
+    let info = await transporter.sendMail({
         from: `"Ja Hwang" <${process.env.NODEMAILER_USER}>`,
         to: "dmagk560@gmail.com",
         subject: message.title,

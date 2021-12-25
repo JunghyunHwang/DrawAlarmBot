@@ -21,7 +21,7 @@ async function sendNotificationMail(message) {
     });
   
     for (let member of receiver) {
-        let info = await transporter.sendNotificationMail({
+        let info = await transporter.sendMail({
             from: `"Ja Hwang" <${process.env.NODEMAILER_USER}>`,
             to: member,
             subject: message.title,
@@ -42,7 +42,7 @@ async function sendErrorMail(message) {
         }
     });
 
-    let info = await transporter.sendErrorMail({
+    let info = await transporter.sendMail({
         from: `"Ja Hwang" <${process.env.NODEMAILER_USER}>`,
         to: "dmagk560@gmail.com",
         subject: message.title,
