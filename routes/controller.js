@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db.js');
+const logging = require('../log');
 
 router.get('/', (req, res) => {
     res.send("Welcome to Draw_alarm");
@@ -41,8 +42,9 @@ router.get('/nike/:name', (req, res) => {
 router.get('/nike/api/:date', (req, res) => {
     const brandName = 'Nike';
     const date = req.params.date;
-    const getColumn = 'full_name, product_price, product_url, draw_date, draw_start_time, draw_end_time, img_url';
+    const getColumn = 'brand_name, full_name, product_price, product_url, draw_date, draw_start_time, draw_end_time, img_url';
     const getSneakersDataSql = `SELECT ${getColumn} FROM draw_info WHERE brand_name=? AND draw_date=?`;
+    const clientIp = req.ip;
 
     db.query(getSneakersDataSql, [brandName, date], (err, result) => {
         if (err) {
@@ -50,6 +52,7 @@ router.get('/nike/api/:date', (req, res) => {
         }
         else {
             res.json(result);
+            logging('api', `${clientIp} get api`);
         }
     });
 });
