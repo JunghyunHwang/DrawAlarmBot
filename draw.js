@@ -3,10 +3,31 @@ const schedule = require('node-schedule');
 const db = require('./config/db.js');
 const NikeDraw = require('./brands/NikeDraw');
 const logging = require('./log');
+const nodemailer = require('nodemailer');
 
 const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
 let brands = [];
 brands.push(Nike);
+
+async function sendErrorMail(message) {
+    let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+            user: process.env.NODEMAILER_USER,
+            pass: process.env.NODEMAILER_PASS
+        }
+    });
+
+    let info = await transporter.sendErrorMail({
+        from: `"Ja Hwang" <${process.env.NODEMAILER_USER}>`,
+        to: "dmagk560@gmail.com",
+        subject: message.title,
+        html: message.contents
+    });
+}
 
 function insertNewProducts(newProducts) {
 	const INSERT_PRODUCT_SQL = "INSERT INTO draw_info SET ?";
@@ -28,6 +49,11 @@ function insertNewProducts(newProducts) {
 		}, (err, inserResult) => {
 			if (err) { // re exception
 				logging('error', 'Draw 추가 실패');
+				const errorMessage = {
+					title: `Error Draw_alarm`,
+					contents: `Fail to add data in DB`
+				};
+				sendErrorMail(errorMessage);
 			}
 			else {
 				logging('info', `${product.full_name} 추가`);
@@ -43,6 +69,11 @@ function checkDrawDatas(brand) {
 	db.query(DRAW_INFO_SQL, [brand.name], async (err, drawDatas) => {
 		if (err) {
 			logging('error', 'Check saved draw data DB 접속 실패');
+			const errorMessage = {
+				title: `Error Draw_alarm`,
+				contents: `Fail to DB connect in chekcDrawDatas`
+			};
+			sendErrorMail(errorMessage);
 		}
 		else {
 			for (let sneakers of brand.drawList) {
@@ -79,6 +110,11 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () =>
 		db.query(NUMBER_OF_DRAW_DATA_SQL, [brand.name], async (err, drawData) => {
 			if (err) {
 				logging('error', 'Check new draw DB 접속 실패');
+				const errorMessage = {
+					title: `Error Draw_alarm`,
+					contents: `Fail to DB connect in checkNewDrawsEveryMinutes`
+				};
+				sendErrorMail(errorMessage);
 			}
 			else if (drawList.length != drawData[0]['COUNT(*)']) {
 				if (drawData[0]['COUNT(*)'] == 0) {
@@ -86,6 +122,11 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () =>
 				}
 				else if (drawData[0]['COUNT(*)'] > drawList.length) {
 					logging('error', 'DB 삭제 안됐을 가능성있음 info log 확인');
+					const errorMessage = {
+						title: `Error Draw_alarm`,
+						contents: `DB 삭제 안됐을 가능성있음 info log 확인`
+					};
+					sendErrorMail(errorMessage);
 				}
 				else {
 					checkDrawDatas(brand);

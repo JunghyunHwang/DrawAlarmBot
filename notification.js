@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const logging = require('./log.js');
 
-async function sendMail(message) {
+async function sendNotificationMail(message) {
     const receiverFilePath = './config/receiver.txt';
     const receiver = fs.readFileSync(receiverFilePath).toString().split('\n');
   
@@ -21,13 +21,33 @@ async function sendMail(message) {
     });
   
     for (let member of receiver) {
-        let info = await transporter.sendMail({
+        let info = await transporter.sendNotificationMail({
             from: `"Ja Hwang" <${process.env.NODEMAILER_USER}>`,
             to: member,
             subject: message.title,
             html: message.contents
         });
     }
+}
+
+async function sendErrorMail(message) {
+    let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+            user: process.env.NODEMAILER_USER,
+            pass: process.env.NODEMAILER_PASS
+        }
+    });
+
+    let info = await transporter.sendErrorMail({
+        from: `"Ja Hwang" <${process.env.NODEMAILER_USER}>`,
+        to: "dmagk560@gmail.com",
+        subject: message.title,
+        html: message.contents
+    });
 }
 
 function setDrawAlarm(todayDrawProduct) {
@@ -57,7 +77,7 @@ function setDrawAlarm(todayDrawProduct) {
     logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
     let drawStartAlarm = schedule.scheduleJob(DRAW_START_TIME, () => {
-        sendMail(drawStartMessage);
+        sendNotificationMail(drawStartMessage);
         logging('notification', `${todayDrawProduct.full_name} THE DRAW 시작 알림`);
         //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
         const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
@@ -65,6 +85,11 @@ function setDrawAlarm(todayDrawProduct) {
         db.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
             if (err) {
                 logging('error', 'Fail DB query Remove data');
+                const errorMessage = {
+                    title: `Error Draw_alarm`,
+                    contents: `Fail DB query Remove data`
+                };
+                sendErrorMail(errorMessage)
             }
             else {
                 logging('info', `${todayDrawProduct.full_name} THE DRAW 삭제`);
@@ -86,6 +111,11 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     db.query(DRAW_INFO_SQL, [TODAY], (err, tomorrowDrawDatas) => {
         if (err) {
             logging('error', 'Fail DB query tomorrow draw');
+            const errorMessage = {
+                title: `Error Draw_alarm`,
+                contents: `Fail DB query tomorrow draw`
+            };
+            sendErrorMail(errorMessage);
         }
         else if (tomorrowDrawDatas.length === 0) {
             logging('info', 'There is no draw tomorrow');
@@ -99,7 +129,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
                 <div><a href="https://www.nike.com/kr/launch/?type=upcoming" style="font-size:25px; color:black;">홈페이지에서 확인</a></div>
                 `
             };
-            sendMail(tomorrowDrawMessage);
+            sendNotificationMail(tomorrowDrawMessage);
         }
     });
 });
@@ -112,6 +142,11 @@ let notificationTodayDraw = schedule.scheduleJob('0 0 7 * * *', () => {
     db.query(DRAW_INFO_SQL, [TODAY], (err, todayDrawDatas) => {
         if (err) {
             logging('error', 'Fail DB query set alarm');
+            const errorMessage = {
+                title: `Error Draw_alarm`,
+                contents: `Fail DB query set alarm`
+            };
+            sendErrorMail(errorMessage);
         }
         else if (todayDrawDatas.length === 0) {
             logging('notification', `${TODAY} THE DRAW 예정이 없습니다.`);
