@@ -31,16 +31,15 @@ class NikeDraw {
             let releaseType = $(item).find('div.ncss-btn-primary-dark').text();
 
             // Check release type
-            if (releaseType.indexOf(strDraw) != -1) {
-                let productUrl = "https://www.nike.com";
-                productUrl += $(item).find('a.comingsoon').attr('href');
+            if (releaseType == strDraw) {
                 let product = {
                     brand_name: this.name,
                     type_name: $(item).find('h3.headline-5').text(),
                     sneakers_name: $(item).find('h6.headline-3').text(),
-                    full_name: `${$(item).find('h3.headline-5').text()} ${$(item).find('h6.headline-3').text()}`,
-                    url: productUrl
+                    url: `https://www.nike.com${$(item).find('a.comingsoon').attr('href')}`
                 };
+
+                product.full_name = `${product.type_name} ${product.sneakers_name}`;
                 this.drawList.push(product);
             }
         }
