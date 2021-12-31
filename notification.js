@@ -104,8 +104,9 @@ function setDrawAlarm(todayDrawProduct) {
 }
 
 let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
-    const DAY = new Date();
-    const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate() + 1}`;
+    let day = new Date();
+    day.setDate(day.getDate() + 1);
+    const TODAY = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
     const DRAW_INFO_SQL = "SELECT brand_name, full_name FROM draw_info WHERE draw_date=?";
 
     db.query(DRAW_INFO_SQL, [TODAY], (err, tomorrowDrawDatas) => {
