@@ -31,7 +31,7 @@ class NikeDraw {
             let releaseType = $(item).find('div.ncss-btn-primary-dark').text();
 
             // Check release type
-            if (releaseType == strDraw) {
+            if (releaseType.indexOf(strDraw) >= 0) {
                 let product = {
                     brand_name: this.name,
                     type_name: $(item).find('h3.headline-5').text(),
