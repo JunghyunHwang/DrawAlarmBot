@@ -54,7 +54,7 @@ function setDrawAlarm(todayDrawProduct) {
     const DRAW_START_TIME = new Date(todayDrawProduct.draw_start_time);
     const DRAW_END_TIME = new Date(todayDrawProduct.draw_end_time);
     const SNEAKERS_NAME = `${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}`;
-  
+
     // Formatting Draw date and time
     let years = DRAW_START_TIME.getFullYear();
     let month = DRAW_START_TIME.getMonth() + 1;
@@ -74,6 +74,7 @@ function setDrawAlarm(todayDrawProduct) {
         <img src="${todayDrawProduct.img_url}"></img>
         `
     };
+    
     logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
     let drawStartAlarm = schedule.scheduleJob(DRAW_START_TIME, () => {
