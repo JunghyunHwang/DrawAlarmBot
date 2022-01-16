@@ -4,6 +4,18 @@ const schedule = require('node-schedule');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 const logging = require('./log.js');
+const telegramBot = require('node-telegram-bot-api');
+
+const telegramToken = process.env.TELELGRAM_TOKEN;
+const bot = new telegramBot(telegramToken, {polling: true});
+
+bot.on('message', (msg) => {
+    // msg => chat: { id: 5011800721, first_name: '중현', last_name: '황', type: 'private' }
+    const chatId = msg.chat.id;
+    // const insertChatId = `INSERT INTO  SET ?`
+    console.log(msg);
+    bot.sendMessage(chatId, '감사합니다!!'); // 소개글
+});
 
 async function sendNotificationMail(message) {
     const receiverFilePath = './config/receiver.txt';
@@ -107,10 +119,10 @@ function setDrawAlarm(todayDrawProduct) {
 let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     let day = new Date();
     day.setDate(day.getDate() + 1);
-    const TODAY = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
-    const DRAW_INFO_SQL = "SELECT brand_name, full_name FROM draw_info WHERE draw_date=?";
+    const today = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
+    const drawInfoSql = "SELECT brand_name, full_name FROM draw_info WHERE draw_date=?";
 
-    db.query(DRAW_INFO_SQL, [TODAY], (err, tomorrowDrawDatas) => {
+    db.query(drawInfoSql, [today], (err, tomorrowDrawDatas) => {
         if (err) {
             logging('error', 'Fail DB query tomorrow draw');
             const errorMessage = {
