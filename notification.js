@@ -152,11 +152,11 @@ function setDrawAlarm(todayDrawProduct) {
     });
 }
 
-let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
+let notificationTomorrowDraw = schedule.scheduleJob('0 28 19 * * *', () => {
     let day = new Date();
     day.setDate(day.getDate() + 1);
     const today = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
-    const drawInfoSql = "SELECT brand_name, full_name FROM draw_info WHERE draw_date=?";
+    const drawInfoSql = "SELECT brand_name, full_name, product_url, img_url FROM draw_info WHERE draw_date=?";
 
     db.query(drawInfoSql, [today], (err, tomorrowDrawDatas) => {
         if (err) {
@@ -171,15 +171,47 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
             logging('info', 'There is no draw tomorrow');
         }
         else if (tomorrowDrawDatas.length > 0) {
-            let tomorrowDrawCount = tomorrowDrawDatas.length;
-
+            // send mail
             const tomorrowDrawMessage = { // brandname, 확인하기 url 변수 사용 필요
-                title: `내일 Nike에서 ${tomorrowDrawCount}개의 DRAW가 예정 되어있습니다!`,
+                title: `내일 Nike에서 ${tomorrowDrawDatas.length}개의 DRAW가 예정 되어있습니다!`,
                 contents: `
                 <div><a href="https://www.nike.com/kr/launch/?type=upcoming" style="font-size:25px; color:black;">홈페이지에서 확인</a></div>
                 `
             };
             sendNotificationMail(tomorrowDrawMessage);
+
+            // send telegram
+            const userInfoSql = 'SELECT chat_id FROM users';
+
+            db.query(userInfoSql, (err, users) => {
+                if (err) {
+                    console.log("error!!!!!!!!!!");
+                    logging('error', 'Fali to check user in database');
+                    const errorMessage = {
+                        title: `Error: Get users info in tomorrow notification`,
+                        contents: `
+                        <p>users 가져오기 실패</p>
+                        <p>${err}</p>
+                        `
+                    };
+                    sendErrorMail(errorMessage);
+                }
+                else {
+                    for (let i = 0; i < users.length; i++) {
+                        const userChatId = users[i].chat_id
+                        
+                        for (let j = 0; j < tomorrowDrawDatas.length; j++) {
+                            const drawUrl = `<a href="${tomorrowDrawDatas[i].product_url}">응모하기</a>`;
+                            bot.sendPhoto(userChatId, tomorrowDrawDatas[j].img_url, { 
+                                caption : `
+                                    내일 드로우 알림 \n${tomorrowDrawDatas[j].brand_name} \n${tomorrowDrawDatas[j].full_name}`
+                                }
+                            );
+                            bot.sendMessage(userChatId, drawUrl, {parse_mode : "HTML"});
+                        }
+                    }
+                }
+            });
         }
     });
 });
