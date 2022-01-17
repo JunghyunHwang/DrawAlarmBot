@@ -8,13 +8,49 @@ const telegramBot = require('node-telegram-bot-api');
 
 const telegramToken = process.env.TELELGRAM_TOKEN;
 const bot = new telegramBot(telegramToken, {polling: true});
+console.log("notification running");
 
 bot.on('message', (msg) => {
     // msg => chat: { id: 5011800721, first_name: '중현', last_name: '황', type: 'private' }
     const chatId = msg.chat.id;
-    // const insertChatId = `INSERT INTO  SET ?`
-    console.log(msg);
-    bot.sendMessage(chatId, '감사합니다!!'); // 소개글
+    const userInfoSql = `SELECT chat_id FROM users WHERE chat_id=?`;
+    const insertChatId = "INSERT INTO users SET ?, created=NOW()";
+
+    db.query(userInfoSql, [chatId], (err, userInfo) => {
+        if (err) {
+            logging('error', 'Fali to check user in database');
+            const errorMessage = {
+                title: `Error: Check users`,
+                contents: `users 확인 실패`
+            };
+            sendErrorMail(errorMessage);
+        }
+        else if (userInfo.length > 0) {
+            bot.sendMessage(chatId, '감사합니다!!'); // 소개글
+        }
+        else {
+            db.query(insertChatId, {
+                chat_id: chatId, 
+                first_name: msg.chat.first_name,
+                last_name: msg.chat.last_name,
+            }, (err, inserResult) => {
+                if (err) {
+                    logging('error', 'Fail to add users');
+                    const errorMessage = {
+                        title: `Error: Add users`,
+                        contents: 
+                        `<p>user 추가 실패</p>
+                        <p>${err}</p>`
+                    };
+                    sendErrorMail(errorMessage);
+                }
+                else {
+                    logging('info', `Add member ${msg.chat.last_name} ${msg.chat.first_name}`);
+                    bot.sendMessage(chatId, '감사합니다!!'); // 소개글
+                }
+            });
+        }
+    });
 });
 
 async function sendNotificationMail(message) {
