@@ -152,7 +152,7 @@ function setDrawAlarm(todayDrawProduct) {
     });
 }
 
-let notificationTomorrowDraw = schedule.scheduleJob('0 28 19 * * *', () => {
+let notificationTomorrowDraw = schedule.scheduleJob('0 10 19 * * *', () => {
     let day = new Date();
     day.setDate(day.getDate() + 1);
     const today = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
@@ -172,15 +172,16 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 28 19 * * *', () => {
         }
         else if (tomorrowDrawDatas.length > 0) {
             // send mail
-            const tomorrowDrawMessage = { // brandname, 확인하기 url 변수 사용 필요
-                title: `내일 Nike에서 ${tomorrowDrawDatas.length}개의 DRAW가 예정 되어있습니다!`,
-                contents: `
-                <div><a href="https://www.nike.com/kr/launch/?type=upcoming" style="font-size:25px; color:black;">홈페이지에서 확인</a></div>
-                `
-            };
-            sendNotificationMail(tomorrowDrawMessage);
+            // const tomorrowDrawMessage = { // brandname, 확인하기 url 변수 사용 필요
+            //     title: `내일 Nike에서 ${tomorrowDrawDatas.length}개의 DRAW가 예정 되어있습니다!`,
+            //     contents: `
+            //     <div><a href="https://www.nike.com/kr/launch/?type=upcoming" style="font-size:25px; color:black;">홈페이지에서 확인</a></div>
+            //     `
+            // };
+            // sendNotificationMail(tomorrowDrawMessage);
 
             // send telegram
+            console.log("Send telegram start!!");
             const userInfoSql = 'SELECT chat_id FROM users';
 
             db.query(userInfoSql, (err, users) => {
@@ -197,17 +198,18 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 28 19 * * *', () => {
                     sendErrorMail(errorMessage);
                 }
                 else {
+                    console.log(tomorrowDrawDatas);
                     for (let i = 0; i < users.length; i++) {
                         const userChatId = users[i].chat_id
                         
                         for (let j = 0; j < tomorrowDrawDatas.length; j++) {
-                            const drawUrl = `<a href="${tomorrowDrawDatas[i].product_url}">응모하기</a>`;
+                            // const drawUrl = `<a href="${tomorrowDrawDatas[i].product_url}">응모하기</a>`;
                             bot.sendPhoto(userChatId, tomorrowDrawDatas[j].img_url, { 
                                 caption : `
                                     내일 드로우 알림 \n${tomorrowDrawDatas[j].brand_name} \n${tomorrowDrawDatas[j].full_name}`
                                 }
                             );
-                            bot.sendMessage(userChatId, drawUrl, {parse_mode : "HTML"});
+                            // bot.sendMessage(userChatId, drawUrl, {parse_mode : "HTML"});
                         }
                     }
                 }
