@@ -4,6 +4,53 @@ const schedule = require('node-schedule');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 const logging = require('./log.js');
+const telegramBot = require('node-telegram-bot-api');
+
+const telegramToken = process.env.TELELGRAM_TOKEN;
+const bot = new telegramBot(telegramToken, {polling: true});
+
+bot.on('message', (msg) => {
+    // msg => chat: { id: 5011800721, first_name: '중현', last_name: '황', type: 'private' }
+    const chatId = msg.chat.id;
+    const userInfoSql = `SELECT chat_id FROM users WHERE chat_id=?`;
+    const insertChatId = "INSERT INTO users SET ?, created=NOW()";
+
+    db.query(userInfoSql, [chatId], (err, userInfo) => {
+        if (err) {
+            logging('error', 'Fali to check user in database');
+            const errorMessage = {
+                title: `Error: Check users`,
+                contents: `users 확인 실패`
+            };
+            sendErrorMail(errorMessage);
+        }
+        else if (userInfo.length > 0) {
+            bot.sendMessage(chatId, '감사합니다!!'); // 소개글
+        }
+        else {
+            db.query(insertChatId, {
+                chat_id: chatId, 
+                first_name: msg.chat.first_name,
+                last_name: msg.chat.last_name,
+            }, (err, inserResult) => {
+                if (err) {
+                    logging('error', 'Fail to add users');
+                    const errorMessage = {
+                        title: `Error: Add users`,
+                        contents: 
+                        `<p>user 추가 실패</p>
+                        <p>${err}</p>`
+                    };
+                    sendErrorMail(errorMessage);
+                }
+                else {
+                    logging('info', `Add member ${msg.chat.last_name} ${msg.chat.first_name}`);
+                    bot.sendMessage(chatId, '감사합니다!!'); // 소개글
+                }
+            });
+        }
+    });
+});
 
 async function sendNotificationMail(message) {
     const receiverFilePath = './config/receiver.txt';
@@ -107,10 +154,10 @@ function setDrawAlarm(todayDrawProduct) {
 let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     let day = new Date();
     day.setDate(day.getDate() + 1);
-    const TODAY = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
-    const DRAW_INFO_SQL = "SELECT brand_name, full_name FROM draw_info WHERE draw_date=?";
+    const today = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
+    const drawInfoSql = "SELECT brand_name, full_name, product_url, draw_start_time, draw_end_time, img_url FROM draw_info WHERE draw_date=?";
 
-    db.query(DRAW_INFO_SQL, [TODAY], (err, tomorrowDrawDatas) => {
+    db.query(drawInfoSql, [today], (err, tomorrowDrawDatas) => {
         if (err) {
             logging('error', 'Fail DB query tomorrow draw');
             const errorMessage = {
@@ -123,18 +170,163 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
             logging('info', 'There is no draw tomorrow');
         }
         else if (tomorrowDrawDatas.length > 0) {
-            let tomorrowDrawCount = tomorrowDrawDatas.length;
-
+            // send mail
             const tomorrowDrawMessage = { // brandname, 확인하기 url 변수 사용 필요
-                title: `내일 Nike에서 ${tomorrowDrawCount}개의 DRAW가 예정 되어있습니다!`,
+                title: `내일 Nike에서 ${tomorrowDrawDatas.length}개의 DRAW가 예정 되어있습니다!`,
                 contents: `
                 <div><a href="https://www.nike.com/kr/launch/?type=upcoming" style="font-size:25px; color:black;">홈페이지에서 확인</a></div>
                 `
             };
             sendNotificationMail(tomorrowDrawMessage);
+
+            // send telegram
+            const userInfoSql = 'SELECT chat_id FROM users';
+
+            db.query(userInfoSql, (err, users) => {
+                if (err) {
+                    logging('error', 'Fali to check user in database');
+                    const errorMessage = {
+                        title: `Error: Get users info in tomorrow notification`,
+                        contents: `
+                        <p>users 가져오기 실패</p>
+                        <p>${err}</p>
+                        `
+                    };
+                    sendErrorMail(errorMessage);
+                }
+                else {
+                    for (let i = 0; i < users.length; i++) {
+                        const userChatId = users[i].chat_id;
+                        
+                        for (let j = 0; j < tomorrowDrawDatas.length; j++) {
+                            const drawStartTime = new Date(tomorrowDrawDatas[j].draw_start_time);
+                            const drawEndTime = new Date(tomorrowDrawDatas[j].draw_end_time);
+                            const timeDifference = Math.floor((drawStartTime - drawEndTime) / 60000);
+
+                            const startHours = drawStartTime.getHours() < 10 ? `0${drawStartTime.getHours()}` : drawStartTime.getHours();
+                            const startMinutes = drawStartTime.getMinutes() < 10 ? `0${drawStartTime.getMinutes()}` : drawStartTime.getMinutes();
+                            const endHours = drawEndTime.getHours() < 10 ? `0${drawEndTime.getHours()}` : drawEndTime.getHours();
+                            const endMinutes = drawEndTime.getMinutes() < 10 ? `0${drawEndTime.getMinutes()}` : drawEndTime.getMinutes();
+
+                            const drawMessage = `내일 드로우 알림: \n${tomorrowDrawDatas[j].brand_name} ${tomorrowDrawDatas[j].full_name}\n${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`
+
+                            bot.sendPhoto(
+                                userChatId, 
+                                tomorrowDrawDatas[j].img_url, 
+                                {
+                                    caption : drawMessage,
+                                    reply_markup: {
+                                        inline_keyboard: [
+                                            [
+                                                {text: '확인하기', url: `${tomorrowDrawDatas[j].product_url}`}
+                                            ]
+                                        ]
+                                    }
+                                }
+                            ).catch((err) => {
+                                logging('error', 'Fail to Telegram send message');
+                                const errorMessage = {
+                                    title: `Error: Fail to Telegram send message`,
+                                    contents: `
+                                    <p>users 가져오기 실패</p>
+                                    <p>${err}</p>
+                                    `
+                                };
+                                sendErrorMail(errorMessage);
+                            });
+                        }
+                    }
+                }
+            });
         }
     });
 });
+
+function setTelegramMessage(todayDrawProduct)
+{
+    const DRAW_START_TIME = new Date(todayDrawProduct.draw_start_time);
+    const DRAW_END_TIME = new Date(todayDrawProduct.draw_end_time);
+
+    // Formatting Draw date and time
+    const years = DRAW_START_TIME.getFullYear();
+    const month = DRAW_START_TIME.getMonth() + 1;
+    const date = DRAW_START_TIME.getDate();
+    const startHours = DRAW_START_TIME.getHours() < 10 ? `0${DRAW_START_TIME.getHours()}` : DRAW_START_TIME.getHours();
+    const startMinutes = DRAW_START_TIME.getMinutes() < 10 ? `0${DRAW_START_TIME.getMinutes()}` : DRAW_START_TIME.getMinutes();
+    const endHours = DRAW_END_TIME.getHours() < 10 ? `0${DRAW_END_TIME.getHours()}` : DRAW_END_TIME.getHours();
+    const endMinutes = DRAW_END_TIME.getMinutes() < 10 ? `0${DRAW_END_TIME.getMinutes()}` : DRAW_END_TIME.getMinutes();
+    const timeDifference = Math.floor((DRAW_END_TIME - DRAW_START_TIME) / 60000);
+    const drawStartMessage = `드로우 시작 알림: \n${todayDrawDatas[j].brand_name} ${todayDrawDatas[j].full_name}\n${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
+    logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
+
+    let drawStartAlarm = schedule.scheduleJob(DRAW_START_TIME, () => {
+        const userInfoSql = 'SELECT chat_id FROM users';
+
+        db.query(userInfoSql, (err, users) => {
+            if (err) {
+                logging('error', 'Fali to check user in database');
+                const errorMessage = {
+                    title: `Error: Get users info in tomorrow notification`,
+                    contents: `
+                    <p>users 가져오기 실패</p>
+                    <p>${err}</p>
+                    `
+                };
+                sendErrorMail(errorMessage);
+            }
+            else {
+                for (let i = 0; i < users.length; i++) {
+                    const userChatId = users[i].chat_id;
+                    
+                    bot.sendPhoto(userChatId, todayDrawDatas[j].img_url, {
+                            caption : drawStartMessage,
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [
+                                        {text: '지금 응모하기', url: `${todayDrawDatas[j].product_url}`}
+                                    ]
+                                ]
+                            }
+                        }
+                    ).catch((err) => {
+                        logging('error', 'Fail to Telegram send message');
+                        const errorMessage = {
+                            title: `Error: Fail to Telegram send message`,
+                            contents: `
+                            <p>users 가져오기 실패</p>
+                            <p>${err}</p>
+                            `
+                        };
+                        sendErrorMail(errorMessage);
+                    });
+                }
+            }
+        });
+        
+        logging('notification', `${todayDrawProduct.full_name} THE DRAW 시작 알림`);
+        //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
+        const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
+  
+        db.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
+            if (err) {
+                logging('error', 'Fail DB query Remove data');
+                const errorMessage = {
+                    title: `Error Draw_alarm`,
+                    contents: `Fail DB query Remove data`
+                };
+                sendErrorMail(errorMessage)
+            }
+            else {
+                logging('info', `${todayDrawProduct.full_name} THE DRAW 삭제`);
+            }
+        });
+    });
+  
+    //  확인하지 않았으면 중간에 한번 더 알려주는거
+    let drawEndAlarm = schedule.scheduleJob(DRAW_END_TIME, () => {
+        logging('notification', `${todayDrawProduct.full_name} THE DRAW 종료 알림`);
+    });
+}
 
 let notificationTodayDraw = schedule.scheduleJob('0 0 7 * * *', () => {
     const DAY = new Date();
@@ -154,8 +346,13 @@ let notificationTodayDraw = schedule.scheduleJob('0 0 7 * * *', () => {
             logging('notification', `${TODAY} THE DRAW 예정이 없습니다.`);
         }
         else {
+            // Send mail
             for (let drawData of todayDrawDatas) {
                 setDrawAlarm(drawData);
+            }
+
+            for (let drawData of todayDrawDatas) {
+                setTelegramMessage(drawData);
             }
         }
     });
