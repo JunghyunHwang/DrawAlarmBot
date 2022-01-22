@@ -6,7 +6,7 @@ const fs = require('fs');
 const logging = require('./log.js');
 const telegramBot = require('node-telegram-bot-api');
 
-const telegramToken = process.env.TELELGRAM_TOKEN;
+const telegramToken = process.env.TELEGRAM_TOKEN;
 const bot = new telegramBot(telegramToken, {polling: true});
 
 bot.on('message', (msg) => {
