@@ -1,11 +1,12 @@
 'use strict';
 const schedule = require('node-schedule');
 const db = require('./config/db.js');
-const NikeDraw = require('./brands/NikeDraw');
 const logging = require('./log');
 const nodemailer = require('nodemailer');
+const NikeDraw = require('./brands/NikeDraw');
+const WorksoutRaffle = require('./brands/Worksout.js');
 
-const Nike = new NikeDraw("Nike", "https://www.nike.com/kr/launch/");
+const Nike = new NikeDraw('Nike', 'https://www.nike.com/kr/launch/');
 let brands = [];
 brands.push(Nike);
 
