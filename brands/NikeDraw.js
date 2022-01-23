@@ -22,10 +22,10 @@ class NikeDraw {
 
     async getDrawList() {
         this.drawList = [];
-        const HTML = await this.scrapPage(this.url);
-        let $ = CHEERIO.load(HTML.data);
-        let bodyList = $("ul.gallery li");
-        let strDraw = "THE DRAW 진행예정";  // 응모중에는 'THE DRAW 응모하기' / 응모 끝나면 'THE DRAW 응모 마감'
+        const html = await this.scrapPage(this.url);
+        let $ = CHEERIO.load(html.data);
+        let bodyList = $('ul.gallery li');
+        let strDraw = 'THE DRAW 진행예정';  // 응모중에는 'THE DRAW 응모하기' / 응모 끝나면 'THE DRAW 응모 마감'
         
         for (let item of bodyList) {
             let releaseType = $(item).find('div.ncss-btn-primary-dark').text();
@@ -51,7 +51,7 @@ class NikeDraw {
         for (let product of newDrawList) {
             let sneakers = await this.scrapPage(product.url);
             let $ = CHEERIO.load(sneakers.data);
-            let imgInfo = $("div.prd-img-wrap");
+            let imgInfo = $('div.prd-img-wrap');
 
             // 문자열 분할로 해결 해보자
             let priceRegex = /\d+/g;

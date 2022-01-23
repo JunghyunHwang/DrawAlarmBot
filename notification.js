@@ -245,7 +245,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
                         for (let j = 0; j < tomorrowDrawDatas.length; j++) {
                             const drawStartTime = new Date(tomorrowDrawDatas[j].draw_start_time);
                             const drawEndTime = new Date(tomorrowDrawDatas[j].draw_end_time);
-                            const timeDifference = Math.floor((drawStartTime - drawEndTime) / 60000);
+                            const timeDifference = Math.floor((drawEndTime - drawStartTime) / 60000);
 
                             const startHours = drawStartTime.getHours() < 10 ? `0${drawStartTime.getHours()}` : drawStartTime.getHours();
                             const startMinutes = drawStartTime.getMinutes() < 10 ? `0${drawStartTime.getMinutes()}` : drawStartTime.getMinutes();
@@ -358,7 +358,7 @@ function setTelegramMessage(todayDrawProduct)
                     title: `Error Draw_alarm`,
                     contents: `Fail DB query Remove data`
                 };
-                sendErrorMail(errorMessage)
+                sendErrorMail(errorMessage);
             }
             else {
                 logging('info', `${todayDrawProduct.full_name} THE DRAW 삭제`);
