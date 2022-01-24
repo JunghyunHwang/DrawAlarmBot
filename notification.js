@@ -23,40 +23,43 @@ bot.on('message', (msg) => {
             const insertChatId = "INSERT INTO users SET ?, created=NOW()";
 
             db.query(userInfoSql, [chatId], (err, userInfo) => {
-                if (err) {
+                try {
+                    if (userInfo.length > 0) {
+                        bot.sendMessage(chatId, '이미 알림 설정 중 입니다. 🤔\n자세한 기능들이 궁금하면 /info 를 입력 해주세요.');
+                    }
+                    else {
+                        db.query(insertChatId, {
+                            chat_id: chatId, 
+                            first_name: msg.chat.first_name,
+                            last_name: msg.chat.last_name,
+                        }, (err, inserResult) => {
+                            try {
+                                logging('info', `Add member ${msg.chat.last_name} ${msg.chat.first_name}`);
+                                const thanksMessgae = '감사합니다! 알림 설정이 완료 되었습니다! 😁\n드로우 전날 21시와 드로우가 시작되는 시간에 알려드릴게요. \n다른 기능들이 궁금하면 /info 를 입력 해주세요.';
+                                bot.sendMessage(chatId, thanksMessgae);
+                            }
+                            catch (err) {
+                                logging('error', 'Fail to add users');
+                                const errorMessage = {
+                                    title: 'Error: Add users',
+                                    contents: 
+                                    `<p>user 추가 실패</p>
+                                    <p>${err}</p>`
+                                };
+                                sendErrorMail(errorMessage);
+                                bot.sendMessage(chatId, '알림 설정 중 문제가 발생 했습니다. \n이 문제가 계속 된다면 dmagk560@gmail.com로 문의 해주세요.');
+                            }
+                        });
+                    }
+                }
+                catch (err) {
                     logging('error', 'Fali to check user in database');
                     const errorMessage = {
                         title: 'Error: Check users',
                         contents: 'users 확인 실패'
                     };
                     sendErrorMail(errorMessage);
-                    bot.sendMessage(chatId, '알림 설정 중 문제가 발생 했습니다.');
-                }
-                else if (userInfo.length > 0) {
-                    bot.sendMessage(chatId, '이미 알림 설정 중 입니다. 🤔\n자세한 기능들이 궁금하면 /info 를 입력 해주세요.');
-                }
-                else {
-                    db.query(insertChatId, {
-                        chat_id: chatId, 
-                        first_name: msg.chat.first_name,
-                        last_name: msg.chat.last_name,
-                    }, (err, inserResult) => {
-                        if (err) {
-                            logging('error', 'Fail to add users');
-                            const errorMessage = {
-                                title: 'Error: Add users',
-                                contents: 
-                                `<p>user 추가 실패</p>
-                                <p>${err}</p>`
-                            };
-                            sendErrorMail(errorMessage);
-                        }
-                        else {
-                            logging('info', `Add member ${msg.chat.last_name} ${msg.chat.first_name}`);
-                            const thanksMessgae = '감사합니다! 알림 설정이 완료 되었습니다! 😁\n드로우 전날 21시와 드로우가 시작되는 시간에 알려드릴게요. \n다른 기능들이 궁금하면 /info 를 입력 해주세요.';
-                            bot.sendMessage(chatId, thanksMessgae);
-                        }
-                    });
+                    bot.sendMessage(chatId, '알림 설정 중 문제가 발생 했습니다. \n이 문제가 계속 된다면 dmagk560@gmail.com로 문의 해주세요.');
                 }
             });
             break;
@@ -75,17 +78,17 @@ bot.on('message', (msg) => {
             const deleteUserInfoSql = 'DELETE FROM users WHERE chat_id=?';
 
             db.query(deleteUserInfoSql, [chatId], (err, userInfo) => {
-                if (err) {
+                try {
+                    bot.sendMessage(chatId, '알림 설정이 해제 되었습니다. 👋');
+                }
+                catch (err) {
                     logging('error', 'Fali to delete user in database');
                     const errorMessage = {
                         title: 'Error: Delete users',
                         contents: 'users 삭제 실패'
                     };
                     sendErrorMail(errorMessage);
-                    bot.sendMessage(chatId, 'Unfollow 중 문제가 발생 했습니다.\n이 현상이 계속 발생하면 대화방을 삭제하시고\n삭제 및 정지를 눌러주세요.');
-                }
-                else {
-                    bot.sendMessage(chatId, '알림 설정이 해제 되었습니다. 👋');
+                    bot.sendMessage(chatId, 'Unfollow 중 문제가 발생 했습니다.\n이 문제가 계속 발생하면 대화방을 삭제하시고\n삭제 및 정지를 눌러주세요.');
                 }
             });
             break;
@@ -252,7 +255,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
                             const endHours = drawEndTime.getHours() < 10 ? `0${drawEndTime.getHours()}` : drawEndTime.getHours();
                             const endMinutes = drawEndTime.getMinutes() < 10 ? `0${drawEndTime.getMinutes()}` : drawEndTime.getMinutes();
 
-                            const drawMessage = `내일 드로우 알림: \n${tomorrowDrawDatas[j].brand_name} ${tomorrowDrawDatas[j].full_name}\n${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`
+                            const drawMessage = `내일 드로우 알림: \n${tomorrowDrawDatas[j].brand_name} ${tomorrowDrawDatas[j].full_name}\n${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
 
                             bot.sendPhoto(
                                 userChatId, 
