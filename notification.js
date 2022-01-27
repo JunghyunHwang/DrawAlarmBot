@@ -291,22 +291,24 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
 
 function setTelegramMessage(todayDrawProduct)
 {
-    const DRAW_START_TIME = new Date(todayDrawProduct.draw_start_time);
-    const DRAW_END_TIME = new Date(todayDrawProduct.draw_end_time);
+    const draw_start_time = new Date(todayDrawProduct.draw_start_time);
+    const draw_end_time = new Date(todayDrawProduct.draw_end_time);
 
     // Formatting Draw date and time
-    const years = DRAW_START_TIME.getFullYear();
-    const month = DRAW_START_TIME.getMonth() + 1;
-    const date = DRAW_START_TIME.getDate();
-    const startHours = DRAW_START_TIME.getHours() < 10 ? `0${DRAW_START_TIME.getHours()}` : DRAW_START_TIME.getHours();
-    const startMinutes = DRAW_START_TIME.getMinutes() < 10 ? `0${DRAW_START_TIME.getMinutes()}` : DRAW_START_TIME.getMinutes();
-    const endHours = DRAW_END_TIME.getHours() < 10 ? `0${DRAW_END_TIME.getHours()}` : DRAW_END_TIME.getHours();
-    const endMinutes = DRAW_END_TIME.getMinutes() < 10 ? `0${DRAW_END_TIME.getMinutes()}` : DRAW_END_TIME.getMinutes();
-    const timeDifference = Math.floor((DRAW_END_TIME - DRAW_START_TIME) / 60000);
+    const years = draw_start_time.getFullYear();
+    const month = draw_start_time.getMonth() + 1;
+    const date = draw_start_time.getDate();
+    const startHours = draw_start_time.getHours() < 10 ? `0${draw_start_time.getHours()}` : draw_start_time.getHours();
+    const startMinutes = draw_start_time.getMinutes() < 10 ? `0${draw_start_time.getMinutes()}` : draw_start_time.getMinutes();
+    const endHours = draw_end_time.getHours() < 10 ? `0${draw_end_time.getHours()}` : draw_end_time.getHours();
+    const endMinutes = draw_end_time.getMinutes() < 10 ? `0${draw_end_time.getMinutes()}` : draw_end_time.getMinutes();
+    const timeDifference = Math.floor((draw_end_time - draw_start_time) / 60000);
     const drawStartMessage = `드로우 시작 알림: \n${todayDrawDatas[j].brand_name} ${todayDrawDatas[j].full_name}\n${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
     logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
-    let drawStartAlarm = schedule.scheduleJob(DRAW_START_TIME, () => {
+    draw_start_time.setMinutes(draw_start_time.getMinutes() - 1);
+
+    let drawStartAlarm = schedule.scheduleJob(draw_start_time, () => {
         const userInfoSql = 'SELECT chat_id FROM users';
 
         db.query(userInfoSql, (err, users) => {
@@ -351,10 +353,9 @@ function setTelegramMessage(todayDrawProduct)
         });
         
         logging('notification', `${todayDrawProduct.full_name} THE DRAW 시작 알림`);
-        //  notification (Draw종료 시간, 몇분 동안 진행?, 당첨자 발표 시간 url)
-        const DELETE_DRAW_SQL = "DELETE FROM draw_info WHERE id=?";
+        const delete_draw_sql = "DELETE FROM draw_info WHERE id=?";
   
-        db.query(DELETE_DRAW_SQL, [todayDrawProduct.id], (err, complete) => {
+        db.query(delete_draw_sql, [todayDrawProduct.id], (err, complete) => {
             if (err) {
                 logging('error', 'Fail DB query Remove data');
                 const errorMessage = {
@@ -370,17 +371,17 @@ function setTelegramMessage(todayDrawProduct)
     });
   
     //  확인하지 않았으면 중간에 한번 더 알려주는거
-    let drawEndAlarm = schedule.scheduleJob(DRAW_END_TIME, () => {
+    let drawEndAlarm = schedule.scheduleJob(draw_end_time, () => {
         logging('notification', `${todayDrawProduct.full_name} THE DRAW 종료 알림`);
     });
 }
 
 let notificationTodayDraw = schedule.scheduleJob('0 0 7 * * *', () => {
-    const DAY = new Date();
-    const TODAY = `${DAY.getFullYear()}-${DAY.getMonth() + 1}-${DAY.getDate()}`;
-    const DRAW_INFO_SQL = "SELECT * FROM draw_info WHERE draw_date=?";
+    const day = new Date();
+    const today = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
+    const draw_info_sql = "SELECT * FROM draw_info WHERE draw_date=?";
   
-    db.query(DRAW_INFO_SQL, [TODAY], (err, todayDrawDatas) => {
+    db.query(draw_info_sql, [today], (err, todayDrawDatas) => {
         if (err) {
             logging('error', 'Fail DB query set alarm');
             const errorMessage = {
@@ -390,7 +391,7 @@ let notificationTodayDraw = schedule.scheduleJob('0 0 7 * * *', () => {
             sendErrorMail(errorMessage);
         }
         else if (todayDrawDatas.length === 0) {
-            logging('notification', `${TODAY} THE DRAW 예정이 없습니다.`);
+            logging('notification', `${today} THE DRAW 예정이 없습니다.`);
         }
         else {
             // Send mail
