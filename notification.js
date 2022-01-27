@@ -25,7 +25,7 @@ bot.on('message', (msg) => {
             db.query(userInfoSql, [chatId], (err, userInfo) => {
                 try {
                     if (userInfo.length > 0) {
-                        bot.sendMessage(chatId, '이미 알림 설정 중 입니다. 🤔\n자세한 기능들이 궁금하면 /info 를 입력 해주세요.');
+                        bot.sendMessage(chatId, '이미 알림 설정 중 입니다. 🤔\n다른 기능들이 궁금하면 /info 를 입력 해주세요.');
                     }
                     else {
                         db.query(insertChatId, {
@@ -67,6 +67,9 @@ bot.on('message', (msg) => {
             const infoMessage = '/follow -> 알림 설정\n\n/brands -> 드로우 알림이 가는 브랜드 목록\n\n/time -> 드로우 알림 시간\n\n/unfollow -> 팔로우 취소 😭';
             bot.sendMessage(chatId, infoMessage);
             break;
+        case '/shedule':
+            // 예정되 있는 드로우 정보 전달
+            break;
         case '/brands':
             const listMessage = '- Nike \n\n더 추가될 예정입니다. 😅';
             bot.sendMessage(chatId, listMessage);
@@ -79,7 +82,7 @@ bot.on('message', (msg) => {
 
             db.query(deleteUserInfoSql, [chatId], (err, userInfo) => {
                 try {
-                    bot.sendMessage(chatId, '알림 설정이 해제 되었습니다. 👋');
+                    bot.sendMessage(chatId, '알림 설정이 해제 되었습니다. 👋 \n알림 설정을 원하신다면 👉 /follow');
                 }
                 catch (err) {
                     logging('error', 'Fali to delete user in database');
@@ -93,7 +96,7 @@ bot.on('message', (msg) => {
             });
             break;
         default:
-            const unKnownMessage = '알 수 없는 메시지 입니다.\n자세한 기능들이 궁금하면 /info 를 입력 해주세요.';
+            const unKnownMessage = '알 수 없는 메시지 입니다.\n다른 기능들이 궁금하면 /info 를 입력 해주세요.';
             bot.sendMessage(chatId, unKnownMessage);
             break;
     }
