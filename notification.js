@@ -294,24 +294,24 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
 
 function setTelegramMessage(todayDrawProduct)
 {
-    const draw_start_time = new Date(todayDrawProduct.draw_start_time);
-    const draw_end_time = new Date(todayDrawProduct.draw_end_time);
+    const drawStartTime = new Date(todayDrawProduct.draw_start_time);
+    const drawEndTime = new Date(todayDrawProduct.draw_end_time);
 
     // Formatting Draw date and time
-    const years = draw_start_time.getFullYear();
-    const month = draw_start_time.getMonth() + 1;
-    const date = draw_start_time.getDate();
-    const startHours = draw_start_time.getHours() < 10 ? `0${draw_start_time.getHours()}` : draw_start_time.getHours();
-    const startMinutes = draw_start_time.getMinutes() < 10 ? `0${draw_start_time.getMinutes()}` : draw_start_time.getMinutes();
-    const endHours = draw_end_time.getHours() < 10 ? `0${draw_end_time.getHours()}` : draw_end_time.getHours();
-    const endMinutes = draw_end_time.getMinutes() < 10 ? `0${draw_end_time.getMinutes()}` : draw_end_time.getMinutes();
-    const timeDifference = Math.floor((draw_end_time - draw_start_time) / 60000);
-    const drawStartMessage = `드로우 시작 알림: \n${todayDrawDatas[j].brand_name} ${todayDrawDatas[j].full_name}\n${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
+    const years = drawStartTime.getFullYear();
+    const month = drawStartTime.getMonth() + 1;
+    const date = drawStartTime.getDate();
+    const startHours = drawStartTime.getHours() < 10 ? `0${drawStartTime.getHours()}` : drawStartTime.getHours();
+    const startMinutes = drawStartTime.getMinutes() < 10 ? `0${drawStartTime.getMinutes()}` : drawStartTime.getMinutes();
+    const endHours = drawEndTime.getHours() < 10 ? `0${drawEndTime.getHours()}` : drawEndTime.getHours();
+    const endMinutes = drawEndTime.getMinutes() < 10 ? `0${drawEndTime.getMinutes()}` : drawEndTime.getMinutes();
+    const timeDifference = Math.floor((drawEndTime - drawStartTime) / 60000);
+    const drawStartMessage = `드로우 시작 알림: \n${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}\n${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
     logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
-    draw_start_time.setMinutes(draw_start_time.getMinutes() - 1);
+    drawStartTime.setMinutes(drawStartTime.getMinutes() - 1);
 
-    let drawStartAlarm = schedule.scheduleJob(draw_start_time, () => {
+    let drawStartAlarm = schedule.scheduleJob(drawStartTime, () => {
         const userInfoSql = 'SELECT chat_id FROM users';
 
         db.query(userInfoSql, (err, users) => {
@@ -330,12 +330,12 @@ function setTelegramMessage(todayDrawProduct)
                 for (let i = 0; i < users.length; i++) {
                     const userChatId = users[i].chat_id;
                     
-                    bot.sendPhoto(userChatId, todayDrawDatas[j].img_url, {
+                    bot.sendPhoto(userChatId, todayDrawProduct.img_url, {
                             caption : drawStartMessage,
                             reply_markup: {
                                 inline_keyboard: [
                                     [
-                                        {text: '지금 응모하기', url: `${todayDrawDatas[j].product_url}`}
+                                        {text: '지금 응모하기', url: `${todayDrawProduct.product_url}`}
                                     ]
                                 ]
                             }
@@ -374,7 +374,7 @@ function setTelegramMessage(todayDrawProduct)
     });
   
     //  확인하지 않았으면 중간에 한번 더 알려주는거
-    let drawEndAlarm = schedule.scheduleJob(draw_end_time, () => {
+    let drawEndAlarm = schedule.scheduleJob(drawEndTime, () => {
         logging('notification', `${todayDrawProduct.full_name} THE DRAW 종료 알림`);
     });
 }
