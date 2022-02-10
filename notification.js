@@ -260,29 +260,27 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
 
                             const drawMessage = `내일 드로우 알림: \n${tomorrowDrawDatas[j].brand_name} ${tomorrowDrawDatas[j].full_name}\n${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
 
-                            bot.sendPhoto(
-                                userChatId, 
-                                tomorrowDrawDatas[j].img_url, 
-                                {
+                            bot.sendPhoto(userChatId, tomorrowDrawDatas[j].img_url, {
                                     caption : drawMessage,
                                     reply_markup: {
                                         inline_keyboard: [
                                             [
-                                                {text: '확인하기', url: `${tomorrowDrawDatas[j].product_url}`}
+                                                { text: '확인하기', url: `${tomorrowDrawDatas[j].product_url}` }
                                             ]
                                         ]
                                     }
                                 }
                             ).catch((err) => {
-                                logging('error', 'Fail to Telegram send message');
-                                const errorMessage = {
-                                    title: `Error: Fail to Telegram send message`,
-                                    contents: `
-                                    <p>users 가져오기 실패</p>
-                                    <p>${err}</p>
-                                    `
-                                };
-                                sendErrorMail(errorMessage);
+                                bot.sendMessage(userChatId, drawMessage, {
+                                    reply_markup: {
+                                        inline_keyboard: [
+                                            [
+                                                { text: '확인하기', url: `${tomorrowDrawDatas[j].product_url}` }
+                                            ]
+                                        ]
+                                    }
+                                });
+                                logging('error', `Fail to Telegram send message ${err}`);
                             });
                         }
                     }
@@ -306,7 +304,7 @@ function setTelegramMessage(todayDrawProduct)
     const endHours = drawEndTime.getHours() < 10 ? `0${drawEndTime.getHours()}` : drawEndTime.getHours();
     const endMinutes = drawEndTime.getMinutes() < 10 ? `0${drawEndTime.getMinutes()}` : drawEndTime.getMinutes();
     const timeDifference = Math.floor((drawEndTime - drawStartTime) / 60000);
-    const drawStartMessage = `드로우 시작 알림: \n${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}\n${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
+    const drawStartMessage = `드로우 시작 알림: \n${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}\n잠시 후 ${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
     logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
     drawStartTime.setMinutes(drawStartTime.getMinutes() - 1);
@@ -335,21 +333,22 @@ function setTelegramMessage(todayDrawProduct)
                             reply_markup: {
                                 inline_keyboard: [
                                     [
-                                        {text: '지금 응모하기', url: `${todayDrawProduct.product_url}`}
+                                        { text: '지금 응모하기', url: `${todayDrawProduct.product_url}` }
                                     ]
                                 ]
                             }
                         }
                     ).catch((err) => {
-                        logging('error', 'Fail to Telegram send message');
-                        const errorMessage = {
-                            title: `Error: Fail to Telegram send message`,
-                            contents: `
-                            <p>users 가져오기 실패</p>
-                            <p>${err}</p>
-                            `
-                        };
-                        sendErrorMail(errorMessage);
+                        bot.sendMessage(userChatId, drawStartMessage, {
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [
+                                        { text: '지금 응모하기', url: `${todayDrawProduct.product_url}` }
+                                    ]
+                                ]
+                            }
+                        });
+                        logging('error', `Fail to Telegram send message ${err}`);
                     });
                 }
             }
