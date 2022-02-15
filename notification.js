@@ -56,7 +56,7 @@ bot.on('message', (msg) => {
                     logging('error', 'Fali to check user in database');
                     const errorMessage = {
                         title: 'Error: Check users',
-                        contents: 'users 확인 실패'
+                        contents: `users 추가 및 확인 실패: ${err}`
                     };
                     sendErrorMail(errorMessage);
                     bot.sendMessage(chatId, '알림 설정 중 문제가 발생 했습니다. \n이 문제가 계속 된다면 dmagk560@gmail.com로 문의 해주세요.');
@@ -88,7 +88,7 @@ bot.on('message', (msg) => {
                     logging('error', 'Fali to delete user in database');
                     const errorMessage = {
                         title: 'Error: Delete users',
-                        contents: 'users 삭제 실패'
+                        contents: `users 삭제 실패: ${err}`
                     };
                     sendErrorMail(errorMessage);
                     bot.sendMessage(chatId, 'Unfollow 중 문제가 발생 했습니다.\n이 문제가 계속 발생하면 대화방을 삭제하시고\n삭제 및 정지를 눌러주세요.');
@@ -185,7 +185,7 @@ function setDrawAlarm(todayDrawProduct) {
                 logging('error', 'Fail DB query Remove data');
                 const errorMessage = {
                     title: `Error Draw_alarm`,
-                    contents: `Fail DB query Remove data`
+                    contents: `Fail DB query Remove data: ${err}`
                 };
                 sendErrorMail(errorMessage)
             }
@@ -212,7 +212,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
             logging('error', 'Fail DB query tomorrow draw');
             const errorMessage = {
                 title: `Error Draw_alarm`,
-                contents: `Fail DB query tomorrow draw`
+                contents: `Fail DB query tomorrow draw: ${err}`
             };
             sendErrorMail(errorMessage);
         }
@@ -362,7 +362,7 @@ function setTelegramMessage(todayDrawProduct)
                 logging('error', 'Fail DB query Remove data');
                 const errorMessage = {
                     title: `Error Draw_alarm`,
-                    contents: `Fail DB query Remove data`
+                    contents: `Fail DB query Remove data: ${err}`
                 };
                 sendErrorMail(errorMessage);
             }
@@ -388,7 +388,7 @@ let notificationTodayDraw = schedule.scheduleJob('0 0 7 * * *', () => {
             logging('error', 'Fail DB query set alarm');
             const errorMessage = {
                 title: `Error Draw_alarm`,
-                contents: `Fail DB query set alarm`
+                contents: `Fail DB query set alarm ${err}`
             };
             sendErrorMail(errorMessage);
         }
