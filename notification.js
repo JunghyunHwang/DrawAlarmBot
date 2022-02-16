@@ -296,16 +296,19 @@ function setTelegramMessage(todayDrawProduct)
     const drawEndTime = new Date(todayDrawProduct.draw_end_time);
 
     // Formatting Draw date and time
-    const years = drawStartTime.getFullYear();
-    const month = drawStartTime.getMonth() + 1;
-    const date = drawStartTime.getDate();
-    const startHours = drawStartTime.getHours() < 10 ? `0${drawStartTime.getHours()}` : drawStartTime.getHours();
-    const startMinutes = drawStartTime.getMinutes() < 10 ? `0${drawStartTime.getMinutes()}` : drawStartTime.getMinutes();
-    const endHours = drawEndTime.getHours() < 10 ? `0${drawEndTime.getHours()}` : drawEndTime.getHours();
-    const endMinutes = drawEndTime.getMinutes() < 10 ? `0${drawEndTime.getMinutes()}` : drawEndTime.getMinutes();
+    const drawTime = {
+        years: drawStartTime.getFullYear(),
+        month: drawStartTime.getMonth() + 1,
+        date: drawStartTime.getDate(),
+        startHours: drawStartTime.getHours() < 10 ? `0${drawStartTime.getHours()}` : drawStartTime.getHours(),
+        startMinutes: drawStartTime.getMinutes() < 10 ? `0${drawStartTime.getMinutes()}` : drawStartTime.getMinutes(),
+        endHours: drawEndTime.getHours() < 10 ? `0${drawEndTime.getHours()}` : drawEndTime.getHours(),
+        endMinutes: drawEndTime.getMinutes() < 10 ? `0${drawEndTime.getMinutes()}` : drawEndTime.getMinutes()
+    };
+
     const timeDifference = Math.floor((drawEndTime - drawStartTime) / 60000);
-    const drawStartMessage = `드로우 시작 알림: \n${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}\n잠시 후 ${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
-    logging('notification', `${years}-${month}-${date} ${startHours}:${startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
+    const drawStartMessage = `드로우 시작 알림: \n${todayDrawProduct.brand_name} ${todayDrawProduct.full_name}\n잠시 후 ${drawTime.startHours}시 ${drawTime.startMinutes}분 ~ ${drawTime.endHours}시 ${drawTime.endMinutes}분 까지\n${timeDifference}분간 진행 예정입니다.`;
+    logging('notification', `${drawTime.years}-${drawTime.month}-${drawTime.date} ${drawTime.startHours}:${drawTime.startMinutes} ${todayDrawProduct.full_name} THE DRAW 알림 설정`);
 
     drawStartTime.setMinutes(drawStartTime.getMinutes() - 1);
 
