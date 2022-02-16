@@ -7,7 +7,7 @@ const logging = require('./log.js');
 const telegramBot = require('node-telegram-bot-api');
 
 const telegramToken = process.env.TELEGRAM_TOKEN;
-const bot = new telegramBot(telegramToken, {polling: true});
+const bot = new telegramBot(telegramToken, { polling: true });
 
 async function sendNotificationMail(message) {
     const receiverFilePath = './config/receiver.txt';
