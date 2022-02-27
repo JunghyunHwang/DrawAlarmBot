@@ -1,5 +1,6 @@
 'use strict';
 const db = require('./config/db.js');
+const logging = require('./log.js');
 const telegramBot = require('node-telegram-bot-api');
 require('dotenv').config();
 
