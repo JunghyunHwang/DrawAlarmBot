@@ -62,7 +62,7 @@ bot.on('message', (msg) => {
             });
             break;
         case '/info':
-            const infoMessage = '/follow -> 알림 설정\n\n/brands -> 드로우 알림이 가는 브랜드 목록\n\n/time -> 드로우 알림 시간\n\n/unfollow -> 팔로우 취소 😭';
+            const infoMessage = '/follow -> 알림 설정\n\n/brands -> 드로우 알림이 가는 브랜드 목록\n\n/time -> 드로우 알림 시간\n\n/unfollow -> 팔로우 취소 😭\n\ndmagk560@gmail.com';
             bot.sendMessage(chatId, infoMessage);
             break;
         case '/shedule':
