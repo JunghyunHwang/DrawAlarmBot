@@ -108,7 +108,7 @@ function checkDrawDatas(brand) {
 	});
 }
 
-let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () => {
+let checkNewDraws = schedule.scheduleJob('0 0 21 * * *', async () => {
 	for (let brand of brands) {
 		let drawList = await brand.getDrawList();
 
@@ -122,7 +122,7 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () =>
 				logging('error', 'Check new draw DB 접속 실패');
 				const errorMessage = {
 					title: `Error Draw_alarm`,
-					contents: `Fail to DB connect in checkNewDrawsEveryMinutes`
+					contents: `Fail to DB connect in checkNewDraws`
 				};
 				sendErrorMail(errorMessage);
 			}
