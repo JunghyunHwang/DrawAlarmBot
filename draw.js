@@ -4,10 +4,8 @@ const db = require('./config/db.js');
 const logging = require('./log');
 const nodemailer = require('nodemailer');
 const NikeDraw = require('./brands/NikeDraw');
-const KreamPrice = require('./brands/kream.js');
 
 const Nike = new NikeDraw('Nike', 'https://www.nike.com/kr/launch/');
-const Kream = new KreamPrice('https://kream.co.kr/search?sort=date_released&per_page=40');
 
 let brands = [];
 brands.push(Nike);
