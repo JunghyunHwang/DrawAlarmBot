@@ -24,8 +24,7 @@ bot.on('message', (msg) => {
                 try {
                     if (userInfo.length > 0) {
                         bot.sendMessage(chatId, '이미 알림 설정 중 입니다. 🤔\n다른 기능들이 궁금하면 /info 를 입력 해주세요.');
-                    }
-                    else {
+                    } else {
                         db.query(insertChatId, {
                             chat_id: chatId, 
                             first_name: msg.chat.first_name,
@@ -35,8 +34,7 @@ bot.on('message', (msg) => {
                                 logging('info', `Add member ${msg.chat.last_name} ${msg.chat.first_name}`);
                                 const thanksMessgae = '감사합니다! 알림 설정이 완료 되었습니다! 😁\n드로우 전날 21시와 드로우가 시작되는 시간에 알려드릴게요. \n다른 기능들이 궁금하면 /info 를 입력 해주세요.';
                                 bot.sendMessage(chatId, thanksMessgae);
-                            }
-                            catch (err) {
+                            } catch (err) {
                                 logging('error', 'Fail to add users');
                                 const errorMessage = {
                                     title: 'Error: Add users',
@@ -49,8 +47,7 @@ bot.on('message', (msg) => {
                             }
                         });
                     }
-                }
-                catch (err) {
+                } catch (err) {
                     logging('error', 'Fali to check user in database');
                     const errorMessage = {
                         title: 'Error: Check users',
@@ -62,7 +59,7 @@ bot.on('message', (msg) => {
             });
             break;
         case '/info':
-            const infoMessage = '/follow -> 알림 설정\n\n/brands -> 드로우 알림이 가는 브랜드 목록\n\n/time -> 드로우 알림 시간\n\n/unfollow -> 팔로우 취소 😭';
+            const infoMessage = '/follow -> 알림 설정\n\n/brands -> 드로우 알림이 가는 브랜드 목록\n\n/time -> 드로우 알림 시간\n\n/unfollow -> 팔로우 취소 😭\n\ndmagk560@gmail.com';
             bot.sendMessage(chatId, infoMessage);
             break;
         case '/shedule':
@@ -81,8 +78,7 @@ bot.on('message', (msg) => {
             db.query(deleteUserInfoSql, [chatId], (err, userInfo) => {
                 try {
                     bot.sendMessage(chatId, '알림 설정이 해제 되었습니다. 👋 \n알림 설정을 원하신다면 👉 /follow');
-                }
-                catch (err) {
+                } catch (err) {
                     logging('error', 'Fali to delete user in database');
                     const errorMessage = {
                         title: 'Error: Delete users',

@@ -5,10 +5,15 @@ const logging = require('./log');
 const nodemailer = require('nodemailer');
 const NikeDraw = require('./brands/NikeDraw');
 const WorksoutRaffle = require('./brands/Worksout.js');
+const KreamPrice = require('./brands/kream.js');
 
 const Nike = new NikeDraw('Nike', 'https://www.nike.com/kr/launch/');
+const Kream = new KreamPrice('https://kream.co.kr/search?sort=date_released&per_page=40');
+
 let brands = [];
 brands.push(Nike);
+
+isCrowd();
 
 async function sendErrorMail(message) {
     let transporter = nodemailer.createTransport({
@@ -28,6 +33,10 @@ async function sendErrorMail(message) {
         subject: message.title,
         html: message.contents
     });
+}
+
+function isCrowd() {
+	Kream.getSneakersPrice();
 }
 
 function insertNewProducts(newProducts) {
@@ -55,8 +64,7 @@ function insertNewProducts(newProducts) {
 					contents: `Fail to add data in DB`
 				};
 				sendErrorMail(errorMessage);
-			}
-			else {
+			} else {
 				logging('info', `${product.full_name} 추가`);
 			}
 		});
@@ -75,8 +83,7 @@ function checkDrawDatas(brand) {
 				contents: `Fail to DB connect in chekcDrawDatas`
 			};
 			sendErrorMail(errorMessage);
-		}
-		else {
+		} else {
 			for (let sneakers of brand.drawList) {
 				let isNewDraw = true;
 				
@@ -99,7 +106,7 @@ function checkDrawDatas(brand) {
 	});
 }
 
-let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () => {
+let checkNewDraws = schedule.scheduleJob('0 0 21 * * *', async () => {
 	for (let brand of brands) {
 		let drawList = await brand.getDrawList();
 
@@ -113,23 +120,20 @@ let checkNewDrawsEveryMinutes = schedule.scheduleJob('0 30 * * * *', async () =>
 				logging('error', 'Check new draw DB 접속 실패');
 				const errorMessage = {
 					title: `Error Draw_alarm`,
-					contents: `Fail to DB connect in checkNewDrawsEveryMinutes`
+					contents: `Fail to DB connect in checkNewDraws`
 				};
 				sendErrorMail(errorMessage);
-			}
-			else if (drawList.length != drawData[0]['COUNT(*)']) {
+			} else if (drawList.length != drawData[0]['COUNT(*)']) {
 				if (drawData[0]['COUNT(*)'] == 0) {
 					insertNewProducts(await brand.getSneakersInfo(drawList));
-				}
-				else if (drawData[0]['COUNT(*)'] > drawList.length) {
+				} else if (drawData[0]['COUNT(*)'] > drawList.length) {
 					logging('error', 'DB 삭제 안됐을 가능성있음 info log 확인');
 					const errorMessage = {
 						title: `Error Draw_alarm`,
 						contents: `DB 삭제 안됐을 가능성있음 info log 확인`
 					};
 					sendErrorMail(errorMessage);
-				}
-				else {
+				} else {
 					checkDrawDatas(brand);
 				}
 			}
