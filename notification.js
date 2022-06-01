@@ -95,8 +95,7 @@ function setDrawAlarm(todayDrawProduct) {
                     contents: `Fail DB query Remove data: ${err}`
                 };
                 sendErrorMail(errorMessage)
-            }
-            else {
+            } else {
                 logging('info', `${todayDrawProduct.full_name} THE DRAW 삭제`);
             }
         });
@@ -122,11 +121,9 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
                 contents: `Fail DB query tomorrow draw: ${err}`
             };
             sendErrorMail(errorMessage);
-        }
-        else if (tomorrowDrawDatas.length === 0) {
+        } else if (tomorrowDrawDatas.length === 0) {
             logging('info', 'There is no draw tomorrow');
-        }
-        else if (tomorrowDrawDatas.length > 0) {
+        } else if (tomorrowDrawDatas.length > 0) {
             // send mail
             const tomorrowDrawMessage = { // brandname, 확인하기 url 변수 사용 필요
                 title: `내일 Nike에서 ${tomorrowDrawDatas.length}개의 DRAW가 예정 되어있습니다!`,
@@ -150,8 +147,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
                         `
                     };
                     sendErrorMail(errorMessage);
-                }
-                else {
+                } else {
                     for (let i = 0; i < users.length; i++) {
                         const userChatId = users[i].chat_id;
                         
@@ -233,8 +229,7 @@ function setTelegramMessage(todayDrawProduct)
                     `
                 };
                 sendErrorMail(errorMessage);
-            }
-            else {
+            } else {
                 for (let i = 0; i < users.length; i++) {
                     const userChatId = users[i].chat_id;
                     
@@ -275,8 +270,7 @@ function setTelegramMessage(todayDrawProduct)
                     contents: `Fail DB query Remove data: ${err}`
                 };
                 sendErrorMail(errorMessage);
-            }
-            else {
+            } else {
                 logging('info', `${todayDrawProduct.full_name} THE DRAW 삭제`);
             }
         });
@@ -301,11 +295,9 @@ let notificationTodayDraw = schedule.scheduleJob('0 0 7 * * *', () => {
                 contents: `Fail DB query set alarm ${err}`
             };
             sendErrorMail(errorMessage);
-        }
-        else if (todayDrawDatas.length === 0) {
+        } else if (todayDrawDatas.length === 0) {
             logging('notification', `${today} THE DRAW 예정이 없습니다.`);
-        }
-        else {
+        } else {
             // Send mail
             for (let drawData of todayDrawDatas) {
                 setDrawAlarm(drawData);

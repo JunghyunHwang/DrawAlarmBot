@@ -64,8 +64,7 @@ function insertNewProducts(newProducts) {
 					contents: `Fail to add data in DB`
 				};
 				sendErrorMail(errorMessage);
-			}
-			else {
+			} else {
 				logging('info', `${product.full_name} 추가`);
 			}
 		});
@@ -84,8 +83,7 @@ function checkDrawDatas(brand) {
 				contents: `Fail to DB connect in chekcDrawDatas`
 			};
 			sendErrorMail(errorMessage);
-		}
-		else {
+		} else {
 			for (let sneakers of brand.drawList) {
 				let isNewDraw = true;
 				
@@ -125,20 +123,17 @@ let checkNewDraws = schedule.scheduleJob('0 0 21 * * *', async () => {
 					contents: `Fail to DB connect in checkNewDraws`
 				};
 				sendErrorMail(errorMessage);
-			}
-			else if (drawList.length != drawData[0]['COUNT(*)']) {
+			} else if (drawList.length != drawData[0]['COUNT(*)']) {
 				if (drawData[0]['COUNT(*)'] == 0) {
 					insertNewProducts(await brand.getSneakersInfo(drawList));
-				}
-				else if (drawData[0]['COUNT(*)'] > drawList.length) {
+				} else if (drawData[0]['COUNT(*)'] > drawList.length) {
 					logging('error', 'DB 삭제 안됐을 가능성있음 info log 확인');
 					const errorMessage = {
 						title: `Error Draw_alarm`,
 						contents: `DB 삭제 안됐을 가능성있음 info log 확인`
 					};
 					sendErrorMail(errorMessage);
-				}
-				else {
+				} else {
 					checkDrawDatas(brand);
 				}
 			}
