@@ -4,7 +4,6 @@ const db = require('./config/db.js');
 const logging = require('./log');
 const nodemailer = require('nodemailer');
 const NikeDraw = require('./brands/NikeDraw');
-const WorksoutRaffle = require('./brands/Worksout.js');
 const KreamPrice = require('./brands/kream.js');
 
 const Nike = new NikeDraw('Nike', 'https://www.nike.com/kr/launch/');
@@ -12,8 +11,6 @@ const Kream = new KreamPrice('https://kream.co.kr/search?sort=date_released&per_
 
 let brands = [];
 brands.push(Nike);
-
-isCrowd();
 
 async function sendErrorMail(message) {
     let transporter = nodemailer.createTransport({
@@ -33,10 +30,6 @@ async function sendErrorMail(message) {
         subject: message.title,
         html: message.contents
     });
-}
-
-function isCrowd() {
-	Kream.getSneakersPrice();
 }
 
 function insertNewProducts(newProducts) {
