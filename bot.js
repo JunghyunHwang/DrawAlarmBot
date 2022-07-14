@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const telegramToken = process.env.TELEGRAM_TOKEN;
 const bot = new telegramBot(telegramToken, {polling: true});
+bot.stopPolling();
 
 bot.on('message', (msg) => {
     const userInput = msg.text;
