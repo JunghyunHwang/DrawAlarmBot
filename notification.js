@@ -3,11 +3,10 @@ const db = require('./config/db.js');
 const schedule = require('node-schedule');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
+const TelegramBot = require('./telegram');
 const logging = require('./log.js');
-const telegramBot = require('node-telegram-bot-api');
 
-const telegramToken = process.env.TELEGRAM_TOKEN;
-const bot = new telegramBot(telegramToken, { polling: true });
+const bot = TelegramBot.getInstance();
 
 async function sendNotificationMail(message) {
     const receiverFilePath = './config/receiver.txt';
@@ -193,9 +192,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     });
 });
 
-// https://api.telegram.org/bot토큰값/sendMessage?chat_id=챗ID값&text=보낼문자
-
-let noticeAlarm = schedule.scheduleJob('0 35 16 20 7 *', () => { //re
+let noticeAlarm = schedule.scheduleJob('0 20 17 20 7 *', () => { //re
     const userInfoSql = 'SELECT chat_id FROM users WHERE chat_id=?'; // re
     const myId = '5011800721'; // re
 

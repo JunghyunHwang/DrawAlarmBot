@@ -1,11 +1,10 @@
 'use strict';
 const db = require('./config/db.js');
 const logging = require('./log.js');
-const telegramBot = require('node-telegram-bot-api');
+const TelegramBot = require('./telegram');
 require('dotenv').config();
 
-const telegramToken = process.env.TELEGRAM_TOKEN;
-const bot = new telegramBot(telegramToken, { polling: false });
+const bot = TelegramBot.getInstance();
 
 bot.on('message', (msg) => {
     const userInput = msg.text;
