@@ -11,6 +11,7 @@ class TelegramBot {
     static getInstance() {
         if (this.instance === undefined) {
             this.instance = new telegramBot(telegramToken, { polling: true });
+            this.instance.stopPolling();
         }
 
         return this.instance;
