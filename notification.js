@@ -281,11 +281,10 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     });
 });
 
-let noticeAlarm = schedule.scheduleJob('0 25 18 20 7 *', () => { //re
-    const userInfoSql = 'SELECT chat_id FROM users WHERE chat_id=?'; // re
-    const myId = '5011800721'; // re
+let noticeAlarm = schedule.scheduleJob('0 0 20 20 7 *', () => {
+    const userInfoSql = 'SELECT chat_id FROM users';
 
-    db.query(userInfoSql, [myId], (err, users) => {
+    db.query(userInfoSql, (err, users) => {
         if (err) {
             logging('error', 'Fali to check user in database');
             const errorMessage = {
@@ -299,7 +298,7 @@ let noticeAlarm = schedule.scheduleJob('0 25 18 20 7 *', () => { //re
         } else {
             for (let i = 0; i < users.length; ++i) {
                 const userChatId = users[i].chat_id;
-                const message = "🤖드로우 알림 봇 공지 사항🤖\n이전 드로우 알림 봇에 문제가 생겨 부득이하게 새로운 봇을 만들게 되었습니다.\n문제가 생긴 동안 알림을 못 보내 드렸던 점 죄송합니다.🙇🏻\n후에 알림 들은 전부 이 봇으로 부터 보내도록 하겠습니다.\n이전 알림 봇은 삭제하셔도 괜찮습니다. 감사합니다.";
+                const message = "🤖드로우 알림 봇 공지 사항🤖\n지난 며칠 동안 드로우 알림 봇에 문제가 생겨 알림이 제대로 작동하지 않았었습니다.\n문제에 대한 처리가 늦었고, 문제가 있는 동안 알림을 못 보내 드렸던 점 죄송합니다.🙇🏻\n현재 문제를 확인했고 수정했습니다.\n추후에 혹시 문제를 발견하시면 dmagk560@gmail.com 으로 알려주시면 신속히 처리하도록 하겠습니다. 감사합니다.";
                 bot.sendMessage(userChatId, message);
             }
         }
