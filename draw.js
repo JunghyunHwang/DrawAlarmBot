@@ -97,7 +97,7 @@ function checkDrawDatas(brand) {
 	});
 }
 
-let checkNewDraws = schedule.scheduleJob('0 0 21 * * *', async () => {
+let checkNewDraws = schedule.scheduleJob('0 0 20 * * *', async () => {
 	for (let brand of brands) {
 		let drawList = await brand.getDrawList();
 
