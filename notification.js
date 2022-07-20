@@ -192,7 +192,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     });
 });
 
-let noticeAlarm = schedule.scheduleJob('0 33 17 20 7 *', () => { //re
+let noticeAlarm = schedule.scheduleJob('0 40 17 20 7 *', () => { //re
     const userInfoSql = 'SELECT chat_id FROM users WHERE chat_id=?'; // re
     const myId = '5011800721'; // re
 
