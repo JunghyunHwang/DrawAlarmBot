@@ -6,18 +6,6 @@ require('dotenv').config();
 
 const telegramToken = process.env.TELEGRAM_TOKEN;
 const bot = new telegramBot(telegramToken, {polling: true});
-async function send_telbot(message) {
-    bot.sendMessage(channelId, message)
-    .then(() => {
-      bot.stopPolling();
-      console.log('꺼졌다!');
-    })
-    .catch((e)=> {
-      console.log('텔레그램 봇 오류 : '+ e);
-    })
-};
-
-send_telbot("Hi");
 
 bot.on('message', (msg) => {
     const userInput = msg.text;

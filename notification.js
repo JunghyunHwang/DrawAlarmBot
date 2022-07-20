@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const logging = require('./log.js');
 const telegramBot = require('node-telegram-bot-api');
+const { builtinModules } = require('module');
 
 const telegramToken = process.env.TELEGRAM_TOKEN;
 const bot = new telegramBot(telegramToken, { polling: true });
@@ -189,6 +190,31 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
                     }
                 }
             });
+        }
+    });
+});
+
+let noticeAlarm = schedule.scheduleJob('0 30 15 20 7 *', () => {
+    const userInfoSql = 'SELECT chat_id FROM users WHERE chat_id=?';
+    const myId = '5011800721';
+
+    db.query(userInfoSql, [myId], (err, users) => {
+        if (err) {
+            logging('error', 'Fali to check user in database');
+            const errorMessage = {
+                title: `Error: Get users info in tomorrow notification`,
+                contents: `
+                <p>users 가져오기 실패</p>
+                <p>${err}</p>
+                `
+            };
+            sendErrorMail(errorMessage);
+        } else {
+            for (let i = 0; i < users.length; ++i) {
+                const userChatId = users[i].chat_id;
+
+                bot.sendMessage(userChatId, "🤖드로우 알림 봇 공지 사항:\n이전 드로우 알림 봇에 문제가 생겨 부득이하게 새로운 봇을 만들게 되었습니다.\n문제가 생긴 동안 알림을 못 보내 드렸던 점 죄송합니다.🙇🏻\n후에 알림 들은 전부 이 봇으로 부터 보내도록 하겠습니다.\n이전 알림 봇은 삭제하셔도 괜찮습니다. 감사합니다.");
+            }
         }
     });
 });
