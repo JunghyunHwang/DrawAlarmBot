@@ -5,11 +5,11 @@ const telegramToken = process.env.TELEGRAM_TOKEN;
 
 class TelegramBot {
     constructor() {
-        this.instance;
+        this.instance = null;
     }
 
     static getInstance() {
-        if (this.instance === undefined) {
+        if (this.instance === null) {
             this.instance = new telegramBot(telegramToken, { polling: true });
         }
 
