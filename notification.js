@@ -281,7 +281,7 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
     });
 });
 
-let noticeAlarm = schedule.scheduleJob('0 0 20 20 7 *', () => {
+let noticeAlarm = schedule.scheduleJob('0 41 10 21 7 *', () => {
     const userInfoSql = 'SELECT chat_id FROM users';
 
     db.query(userInfoSql, (err, users) => {
