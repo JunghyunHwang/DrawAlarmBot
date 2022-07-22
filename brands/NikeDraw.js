@@ -48,6 +48,8 @@ class NikeDraw {
     }
 
     async getSneakersInfo(newDrawList) {
+        this.drawList = [];
+        
         for (let product of newDrawList) {
             let sneakers = await this.scrapPage(product.url);
             let $ = CHEERIO.load(sneakers.data);

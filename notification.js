@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const TelegramBot = require('./telegram');
 const logging = require('./log.js');
+const SneakersInfo = require('./draw/SneakersInfo.js');
 
 const bot = TelegramBot.getInstance();
 
@@ -72,41 +73,35 @@ bot.on('message', (msg) => {
                         bot.sendMessage(chatId, "예정된 드로우가 없습니다.🙂");
                     } else {
                         for (let sneaker of drawInfo) {
-                            const drawStartTime = new Date(sneaker.draw_start_time);
-                            const drawEndTime = new Date(sneaker.draw_end_time);
-                            
-                            const startHours = drawStartTime.getHours() < 10 ? `0${drawStartTime.getHours()}` : drawStartTime.getHours();
-                            const startMinutes = drawStartTime.getMinutes() < 10 ? `0${drawStartTime.getMinutes()}` : drawStartTime.getMinutes();
-                            const endHours = drawEndTime.getHours() < 10 ? `0${drawEndTime.getHours()}` : drawEndTime.getHours();
-                            const endMinutes = drawEndTime.getMinutes() < 10 ? `0${drawEndTime.getMinutes()}` : drawEndTime.getMinutes();
+                            const sneakerInfo = new SneakersInfo(sneaker);
 
-                            const message = `예정된 드로우: \n${sneaker.brand_name} ${sneaker.full_name}\n${drawStartTime.getMonth() + 1}월 ${drawStartTime.getDay()}일 ${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n`;
-
-                            bot.sendPhoto(chatId, sneaker.img_url, {
-                                    caption : message,
+                            bot.sendPhoto(chatId, sneakerInfo.getImage(), {
+                                    caption : sneakerInfo.getScheduledDrawMessage(),
                                     reply_markup: {
                                         inline_keyboard: [
                                             [
-                                                { text: '확인하기', url: `${sneaker.product_url}` }
+                                                { text: '확인하기', url: `${sneakerInfo.getUrl()}` }
                                             ]
                                         ]
                                     }
                                 }
                             ).catch((err) => {
-                                bot.sendMessage(chatId, message, {
+                                bot.sendMessage(chatId, sneakerInfo.getScheduledDrawMessage(), {
                                     reply_markup: {
                                         inline_keyboard: [
                                             [
-                                                { text: '확인하기', url: `${sneaker.product_url}` }
+                                                { text: '확인하기', url: `${sneakerInfo.getUrl()}` }
                                             ]
                                         ]
                                     }
                                 });
+
                                 logging('error', `Fail to Telegram send message ${err}`);
                             });
                         }
                     }
                 } catch (err) {
+                    console.log(err);
                     logging('error', `Fali to get draw information in database: ${err}`);
                     const errorMessage = {
                         title: 'Error: Get draw information',
