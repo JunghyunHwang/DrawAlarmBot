@@ -69,6 +69,7 @@ bot.on('message', (msg) => {
 
             db.query(scheduleInfoSql, (err, drawInfo) => {
                 try {
+                    console.log(drawInfo.length);
                     if (drawInfo.length == 0) {
                         bot.sendMessage(chatId, "예정된 드로우가 없습니다.🙂");
                     } else {
