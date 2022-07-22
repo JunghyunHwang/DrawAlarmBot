@@ -68,8 +68,10 @@ bot.on('message', (msg) => {
             const scheduleInfoSql = "SELECT brand_name, full_name, product_url, draw_date, draw_start_time, draw_end_time, img_url FROM draw_info";
 
             db.query(scheduleInfoSql, (err, drawInfo) => {
+                console.log(err);
+                
                 try {
-                    if (drawInfo == undefined || drawInfo.length === 0) {
+                    if (drawInfo.length === 0) {
                         bot.sendMessage(chatId, "예정된 드로우가 없습니다.🙂");
                     } else {
                         for (let sneaker of drawInfo) {
