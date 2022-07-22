@@ -52,7 +52,7 @@ bot.on('message', (msg) => {
                     logging('error', 'Fali to check user in database');
                     const errorMessage = {
                         title: 'Error: Check users',
-                        contents: 'users 확인 실패'
+                        contents: `users 확인 실패: ${err}`
                     };
                     sendErrorMail(errorMessage);
                     bot.sendMessage(chatId, '알림 설정 중 문제가 발생 했습니다. \n이 문제가 계속 된다면 dmagk560@gmail.com로 문의 해주세요.');
@@ -63,8 +63,59 @@ bot.on('message', (msg) => {
             const infoMessage = '/follow -> 알림 설정\n\n/brands -> 드로우 알림이 가는 브랜드 목록\n\n/time -> 드로우 알림 시간\n\n/unfollow -> 팔로우 취소 😭\n\ndmagk560@gmail.com';
             bot.sendMessage(chatId, infoMessage);
             break;
-        case '/shedule':
-            // 예정되 있는 드로우 정보 전달
+        case '/schedule':
+            const scheduleInfoSql = "SELECT brand_name, full_name, product_url, draw_date, draw_start_time, draw_end_time, img_url FROM draw_info";
+
+            db.query(scheduleInfoSql, (err, drawInfo) => {
+                try {
+                    if (drawInfo.length == 0) {
+                        bot.sendMessage(chatId, "예정된 드로우가 없습니다.🙂");
+                    } else {
+                        for (let sneaker of drawInfo) {
+                            const drawStartTime = new Date(sneaker.draw_start_time);
+                            const drawEndTime = new Date(sneaker.draw_end_time);
+                            
+                            const startHours = drawStartTime.getHours() < 10 ? `0${drawStartTime.getHours()}` : drawStartTime.getHours();
+                            const startMinutes = drawStartTime.getMinutes() < 10 ? `0${drawStartTime.getMinutes()}` : drawStartTime.getMinutes();
+                            const endHours = drawEndTime.getHours() < 10 ? `0${drawEndTime.getHours()}` : drawEndTime.getHours();
+                            const endMinutes = drawEndTime.getMinutes() < 10 ? `0${drawEndTime.getMinutes()}` : drawEndTime.getMinutes();
+
+                            const message = `예정된 드로우: \n${sneaker.brand_name} ${sneaker.full_name}\n${drawStartTime.getMonth() + 1}월 ${drawStartTime.getDay()}일 ${startHours}시 ${startMinutes}분 ~ ${endHours}시 ${endMinutes}분 까지\n`;
+
+                            bot.sendPhoto(chatId, sneaker.img_url, {
+                                    caption : message,
+                                    reply_markup: {
+                                        inline_keyboard: [
+                                            [
+                                                { text: '확인하기', url: `${sneaker.product_url}` }
+                                            ]
+                                        ]
+                                    }
+                                }
+                            ).catch((err) => {
+                                bot.sendMessage(chatId, message, {
+                                    reply_markup: {
+                                        inline_keyboard: [
+                                            [
+                                                { text: '확인하기', url: `${sneaker.product_url}` }
+                                            ]
+                                        ]
+                                    }
+                                });
+                                logging('error', `Fail to Telegram send message ${err}`);
+                            });
+                        }
+                    }
+                } catch (err) {
+                    logging('error', `Fali to get draw information in database: ${err}`);
+                    const errorMessage = {
+                        title: 'Error: Get draw information',
+                        contents: `Schedule 확인 실패: ${err}`
+                    };
+                    sendErrorMail(errorMessage);
+                    bot.sendMessage(chatId, '문제가 발생 했습니다. \n이 문제가 계속 된다면 dmagk560@gmail.com로 문의 해주세요.');
+                }
+            });
             break;
         case '/brands':
             const listMessage = '- Nike \n\n더 추가될 예정입니다. 😅';
@@ -277,40 +328,6 @@ let notificationTomorrowDraw = schedule.scheduleJob('0 0 21 * * *', () => {
                     }
                 }
             });
-        }
-    });
-});
-
-let noticeAlarm = schedule.scheduleJob('0 41 10 21 7 *', () => {
-    const userInfoSql = 'SELECT chat_id FROM users';
-
-    db.query(userInfoSql, (err, users) => {
-        if (err) {
-            logging('error', 'Fali to check user in database');
-            const errorMessage = {
-                title: `Error: Get users info in tomorrow notification`,
-                contents: `
-                <p>users 가져오기 실패</p>
-                <p>${err}</p>
-                `
-            };
-            sendErrorMail(errorMessage);
-        } else {
-            for (let i = 0; i < users.length; ++i) {
-                const userChatId = users[i].chat_id;
-                const message = "🤖드로우 알림 봇 공지 사항🤖\n지난 며칠 동안 드로우 알림 봇에 문제가 생겨 알림이 제대로 작동하지 않았었습니다.\n문제에 대한 처리가 늦었고, 문제가 있는 동안 알림을 못 보내 드렸던 점 죄송합니다.🙇🏻\n현재 문제를 확인했고 수정했습니다.\n추후에 혹시 문제를 발견하시면 dmagk560@gmail.com 으로 알려주시면 신속히 처리하도록 하겠습니다. 감사합니다.";
-                bot.sendMessage(userChatId, message);
-                const mailMessage = {
-                    title: "🤖드로우 알림 봇 공지 사항🤖",
-                    contents: `
-                    <div>지난 며칠 동안 드로우 알림 봇에 문제가 생겨 알림이 제대로 작동하지 않았었습니다.</div>
-                    <div>문제에 대한 처리가 늦었고, 문제가 있는 동안 알림을 못 보내 드렸던 점 죄송합니다.🙇🏻</div>
-                    <div>현재 문제를 확인했고 수정했습니다.</div>
-                    <div>추후에 혹시 문제를 발견하시면 dmagk560@gmail.com 으로 알려주시면 신속히 처리하도록 하겠습니다. 감사합니다.</div>
-                    `
-                };
-                sendNotificationMail(mailMessage);
-            }
         }
     });
 });
