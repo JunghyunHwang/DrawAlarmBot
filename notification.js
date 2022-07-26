@@ -68,7 +68,8 @@ bot.on('message', (msg) => {
             const scheduleInfoSql = "SELECT brand_name, full_name, product_url, draw_date, draw_start_time, draw_end_time, img_url FROM draw_info";
 
             db.query(scheduleInfoSql, (err, drawInfo) => {
-                console.log(err);
+                console.log(typeof(drawInfo));
+                console.log(typeof(drawInfo.length));
                 
                 try {
                     if (drawInfo.length === 0) {
