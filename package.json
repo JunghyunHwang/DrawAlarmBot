@@ -22,5 +22,8 @@
     "nodemailer": "^6.6.3",
     "querystring": "^0.2.1",
     "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "@types/mysql": "^2.15.21"
   }
 }

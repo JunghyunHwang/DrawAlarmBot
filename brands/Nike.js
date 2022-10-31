@@ -22,7 +22,7 @@ var Nike = /** @class */ (function (_super) {
     function Nike(brand, url) {
         return _super.call(this, brand, url) || this;
     }
-    Nike.prototype.GetNewProduct = function () {
+    Nike.prototype.GetNewProduct = function (products) {
         var product = [];
         // ...
         return product;

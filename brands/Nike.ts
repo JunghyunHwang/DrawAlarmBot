@@ -1,6 +1,6 @@
 import { Brand } from "./Brand";
-import { eBrand } from "./brandTypes";
-import { DrawInfo } from "./DrawInfo";
+import { eBrand } from "./eBrandTypes"
+import { ProductInfo } from "./ProductInfo";
 
 export class Nike extends Brand
 {
@@ -8,8 +8,9 @@ export class Nike extends Brand
         super(brand, url);
     }
 
-    public GetNewProduct(): DrawInfo[] {
-        let product: DrawInfo[] = [];
+    public GetNewProduct(products: ProductInfo[]): ProductInfo[] {
+        
+        let product: ProductInfo[] = [];
 
         // ...
 

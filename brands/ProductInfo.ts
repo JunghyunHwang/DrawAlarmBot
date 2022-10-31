@@ -1,6 +1,6 @@
-import { eBrand } from "./brandTypes"
+import { eBrand } from "./eBrandTypes"
 
-export class DrawInfo
+export class ProductInfo
 {
     public brandType: eBrand;
     public typeName: string;
@@ -11,7 +11,7 @@ export class DrawInfo
     public endTime: Date;
     public imgUrl: string;
 
-    public Equals(other: DrawInfo): boolean {
+    public Equals(other: ProductInfo): boolean {
         return (this.brandType == other.brandType 
                 && this.url == other.url
                 && this.imgUrl == other.imgUrl);
