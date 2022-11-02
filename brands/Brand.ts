@@ -1,6 +1,5 @@
 import { ProductInfo } from "./ProductInfo";
 import { db } from "../config/Database";
-import Query = require("mysql2/typings/mysql/lib/protocol/sequences/Query");
 
 export abstract class Brand
 {
@@ -11,6 +10,7 @@ export abstract class Brand
     constructor(name: string, url: string) {
         this.brandName = name;
         this.url = url;
+        this.upcommingProducts = new Array();
 
         this.LoadProductInDatabase();
     }
@@ -24,9 +24,6 @@ export abstract class Brand
     public LoadProductInDatabase(): void {
 	    const DRAW_INFO_SQL: string = "SELECT brand_name, type_name, sneakers_name, product_price, product_url, draw_start_time, draw_end_time, img_url FROM draw_info WHERE brand_name=?";
         
-        let result = db.query(DRAW_INFO_SQL, [this.brandName]);
-        console.log(result);
-        
         db.query(DRAW_INFO_SQL, [this.brandName], (err, productDatas) => {
             if (err) {
                 console.log("Error");
@@ -34,7 +31,8 @@ export abstract class Brand
             }
 
             for (let data of productDatas) {
-                let product: ProductInfo;
+
+                let product: ProductInfo = new ProductInfo();
                 product.brandName = data.brand_name;
                 product.typeName = data.type_name;
                 product.sneakersName = data.sneakers_name;
