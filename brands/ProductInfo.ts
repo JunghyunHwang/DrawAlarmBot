@@ -1,8 +1,6 @@
-import { eBrand } from "./eBrandTypes"
-
 export class ProductInfo
 {
-    public brandType: eBrand;
+    public brandName: string;
     public typeName: string;
     public sneakersName: string;
     public price: number;
@@ -12,7 +10,7 @@ export class ProductInfo
     public imgUrl: string;
 
     public Equals(other: ProductInfo): boolean {
-        return (this.brandType == other.brandType 
+        return (this.brandName == other.brandName 
                 && this.url == other.url
                 && this.imgUrl == other.imgUrl);
     }

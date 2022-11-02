@@ -1,11 +1,10 @@
 import { Brand } from "./Brand";
-import { eBrand } from "./eBrandTypes"
 import { ProductInfo } from "./ProductInfo";
 
 export class Nike extends Brand
 {
-    constructor (brand: eBrand, url: string) {
-        super(brand, url);
+    constructor (name: string, url: string) {
+        super(name, url);
     }
 
     public GetNewProduct(products: ProductInfo[]): ProductInfo[] {

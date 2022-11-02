@@ -5,7 +5,7 @@ var ProductInfo = /** @class */ (function () {
     function ProductInfo() {
     }
     ProductInfo.prototype.Equals = function (other) {
-        return (this.brandType == other.brandType
+        return (this.brandName == other.brandName
             && this.url == other.url
             && this.imgUrl == other.imgUrl);
     };

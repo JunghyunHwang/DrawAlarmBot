@@ -19,8 +19,8 @@ exports.Nike = void 0;
 var Brand_1 = require("./Brand");
 var Nike = /** @class */ (function (_super) {
     __extends(Nike, _super);
-    function Nike(brand, url) {
-        return _super.call(this, brand, url) || this;
+    function Nike(name, url) {
+        return _super.call(this, name, url) || this;
     }
     Nike.prototype.GetNewProduct = function (products) {
         var product = [];

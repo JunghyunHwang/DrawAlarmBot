@@ -1,28 +1,18 @@
-import { eBrand } from "./eBrandTypes";
 import { ProductInfo } from "./ProductInfo";
 import { db } from "../config/Database";
+import Query = require("mysql2/typings/mysql/lib/protocol/sequences/Query");
 
 export abstract class Brand
 {
-    protected readonly brandType: eBrand;
-    protected readonly url: string;
     protected readonly brandName: string;
+    protected readonly url: string;
+    protected upcommingProducts: ProductInfo[];
 
-    constructor(brand: eBrand, url: string) {
-        this.brandType = brand;
+    constructor(name: string, url: string) {
+        this.brandName = name;
         this.url = url;
 
-        switch (this.brandType) {
-            case eBrand.NIKE:
-                this.brandName = "Nike";
-                break;
-            default:
-                break;
-        }
-    }
-
-    public get GetBrandType(): eBrand {
-        return this.brandType;
+        this.LoadProductInDatabase();
     }
 
     public get GetUrl(): string {
@@ -31,15 +21,35 @@ export abstract class Brand
 
     public abstract GetNewProduct(products: ProductInfo[]): ProductInfo[];
 
-    public getProductInfoInDatabase(): ProductInfo[] {
-        let result: ProductInfo[];
-	    const DRAW_INFO_SQL: string = "SELECT full_name FROM draw_info WHERE brand_name=?";
-
-        db.query(DRAW_INFO_SQL, [this.brandName], (err, productDatas) => {
-            console.log(typeof(productDatas));
-            console.log(productDatas);
-        });
+    public LoadProductInDatabase(): void {
+	    const DRAW_INFO_SQL: string = "SELECT brand_name, type_name, sneakers_name, product_price, product_url, draw_start_time, draw_end_time, img_url FROM draw_info WHERE brand_name=?";
         
-        return result;
+        let result = db.query(DRAW_INFO_SQL, [this.brandName]);
+        console.log(result);
+        
+        db.query(DRAW_INFO_SQL, [this.brandName], (err, productDatas) => {
+            if (err) {
+                console.log("Error");
+                return;
+            }
+
+            for (let data of productDatas) {
+                let product: ProductInfo;
+                product.brandName = data.brand_name;
+                product.typeName = data.type_name;
+                product.sneakersName = data.sneakers_name;
+                product.price = data.product_price;
+                product.url = data.product_url;
+                product.startTime = data.draw_start_time;
+                product.endTime = data.draw_end_time;
+                product.imgUrl = data.img_url;
+
+                this.upcommingProducts.push(product);
+            }
+        });
+    }
+
+    public GetUpcommingProducts(): readonly ProductInfo[] {
+        return this.upcommingProducts;
     }
 }
