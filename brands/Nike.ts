@@ -1,3 +1,5 @@
+import axios from "axios";
+import { load } from 'cheerio';
 import { Brand } from "./Brand";
 import { ProductInfo } from "./ProductInfo";
 
@@ -7,12 +9,12 @@ export class Nike extends Brand
         super(name, url);
     }
 
-    public GetNewProduct(products: ProductInfo[]): ProductInfo[] {
+    public async GetNewProduct(): Promise<ProductInfo[]> {
         
         let product: ProductInfo[] = [];
 
-        // ...
-
+        const html = await axios.get(this.url);
+        
         return product;
     }
 }

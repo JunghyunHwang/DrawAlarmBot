@@ -1,20 +1,28 @@
 import { Nike } from "./brands/Nike.js";
 import { Brand } from "./brands/Brand.js";
 import { ProductInfo } from "./brands/ProductInfo.js";
+import { BrandManager } from "./brands/BrandManager.js";
 
+const brandManager: BrandManager = BrandManager.GetInstance();
 let nike: Brand = new Nike("Nike", "https://www.nike.com/kr/launch");
 
-let products: readonly ProductInfo[] = nike.GetUpcommingProducts();
+brandManager.AddBrand(nike);
+brandManager.LoadData().then(() => {
+    main();
+});
 
-console.log(products.length);
+function main(): void {
+    let nikeProducts: readonly ProductInfo[] = nike.GetUpcommingProducts();
 
-for (let i = 0;  i < products.length; ++i) {
-    console.log(`Brand name: ${products[i].brandName}`);
-    console.log(`Type name: ${products[i].typeName}`);
-    console.log(`Sneakers name: ${products[i].sneakersName}`);
-    console.log(`Price: ${products[i].price}`);
-    console.log(`url: ${products[i].url}`);
-    console.log(`Start time: ${products[i].startTime}`);
-    console.log(`End time: ${products[i].endTime}`);
-    console.log(`Image url: ${products[i].imgUrl}`);
+    for (let i = 0; i < nikeProducts.length; ++i) {
+        console.log(`Brand name: ${nikeProducts[i].brandName}`);
+        console.log(`Type name: ${nikeProducts[i].typeName}`);
+        console.log(`Sneakers name: ${nikeProducts[i].sneakersName}`);
+        console.log(`Price: ${nikeProducts[i].price}`);
+        console.log(`URL: ${nikeProducts[i].url}`);
+        console.log(`Start time: ${nikeProducts[i].startTime}`);
+        console.log(`End time: ${nikeProducts[i].endTime}`);
+        console.log(`Image url: ${nikeProducts[i].imgUrl}`);
+        console.log("------------------------------------------");
+    }
 }
